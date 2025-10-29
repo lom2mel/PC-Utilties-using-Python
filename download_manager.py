@@ -14,12 +14,13 @@ class DownloadManager(QWidget):
         
         # Download URLs (official download links)
         self.avast_url = "https://www.avast.com/download-thank-you.php?product=AV-FREE-ONLINE&loc=en-us"
+        self.virustotal_url = "https://www.virustotal.com/gui/home/upload"
         self.ccleaner_url = "https://www.ccleaner.com/ccleaner/download/standard"
         
     def init_ui(self):
         self.setWindowTitle("PC Utilities Download Manager")
-        self.setGeometry(300, 300, 400, 250)
-        self.setFixedSize(400, 250)
+        self.setGeometry(300, 300, 400, 300)
+        self.setFixedSize(400, 300)
         
         layout = QVBoxLayout()
         
@@ -55,7 +56,29 @@ class DownloadManager(QWidget):
         """)
         self.avast_button.clicked.connect(self.download_avast)
         layout.addWidget(self.avast_button)
-        
+
+        # VirusTotal Button
+        self.virustotal_button = QPushButton("Scan file with VirusTotal")
+        self.virustotal_button.setStyleSheet("""
+            QPushButton {
+                background-color: #394EFF;
+                color: white;
+                border: none;
+                padding: 10px;
+                font-size: 14px;
+                font-weight: bold;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #2D3FCC;
+            }
+            QPushButton:pressed {
+                background-color: #2433A3;
+            }
+        """)
+        self.virustotal_button.clicked.connect(self.open_virustotal)
+        layout.addWidget(self.virustotal_button)
+
         # Download CCleaner Button
         self.ccleaner_button = QPushButton("Download CCleaner")
         self.ccleaner_button.setStyleSheet("""
@@ -105,7 +128,23 @@ class DownloadManager(QWidget):
             self.show_download_message("CCleaner")
         except Exception as e:
             self.status_label.setText(f"Error opening CCleaner page: {str(e)}")
-    
+
+    def open_virustotal(self):
+        """Open VirusTotal file upload page"""
+        self.status_label.setText("Opening VirusTotal...")
+        try:
+            webbrowser.open(self.virustotal_url)
+            self.status_label.setText("VirusTotal opened in browser")
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("VirusTotal Opened")
+            msg.setText("VirusTotal file scanner opened!")
+            msg.setInformativeText("You can now upload any file to scan it for viruses and malware.")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+        except Exception as e:
+            self.status_label.setText(f"Error opening VirusTotal: {str(e)}")
+
     def show_download_message(self, app_name):
         """Show information message about the download"""
         msg = QMessageBox()
