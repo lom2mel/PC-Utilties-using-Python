@@ -31,10 +31,34 @@ echo Installing dependencies...
 echo.
 
 REM Upgrade pip first
-python -m pip install --upgrade pip
+echo Upgrading pip...
+python -m pip install --upgrade pip setuptools wheel
+echo.
 
-REM Install required packages
-python -m pip install -r requirements.txt
+REM Install required packages one by one for better error handling
+echo Installing PySide6...
+python -m pip install PySide6>=6.5.0
+if %errorlevel% neq 0 (
+    echo Warning: Failed to install PySide6>=6.5.0, trying lower version...
+    python -m pip install PySide6
+    if %errorlevel% neq 0 (
+        echo ERROR: Failed to install PySide6
+        pause
+        exit /b 1
+    )
+)
+
+echo Installing pywin32...
+python -m pip install pywin32>=305
+if %errorlevel% neq 0 (
+    echo Warning: Failed to install pywin32>=305, trying lower version...
+    python -m pip install pywin32
+    if %errorlevel% neq 0 (
+        echo ERROR: Failed to install pywin32
+        pause
+        exit /b 1
+    )
+)
 
 if %errorlevel% neq 0 (
     echo.
