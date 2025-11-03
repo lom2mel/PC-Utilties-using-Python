@@ -3,9 +3,10 @@ import os
 import webbrowser
 from pathlib import Path
 from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton,
-                                QLabel, QMessageBox, QFileDialog, QProgressDialog)
+                                QLabel, QMessageBox, QFileDialog, QProgressDialog,
+                                QMenuBar)
 from PySide6.QtCore import Qt, QThread, Signal
-from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont, QAction
 import win32com.client
 import pythoncom
 import shutil
@@ -273,8 +274,18 @@ class DownloadManager(QWidget):
         self.setWindowTitle("PC Utilities Manager")
         self.setGeometry(300, 300, 450, 400)
         self.setFixedSize(450, 400)
-        
+
+        # Create menu bar
+        menu_bar = QMenuBar(self)
+        help_menu = menu_bar.addMenu("Help")
+
+        # Add About action
+        about_action = QAction("About", self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
+
         layout = QVBoxLayout()
+        layout.setMenuBar(menu_bar)
         
         # Title
         title = QLabel("PC Utilities Manager")
@@ -426,6 +437,22 @@ class DownloadManager(QWidget):
         msg.setWindowTitle("Download Started")
         msg.setText(f"{app_name} download page opened!")
         msg.setInformativeText(f"The {app_name} download should start automatically in your browser.\nThe file will be saved to your Downloads folder.")
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec()
+
+    def show_about(self):
+        """Show About dialog"""
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle("About PC Utilities Manager")
+        msg.setText("PC Utilities Manager")
+        msg.setInformativeText(
+            "Version 1.0\n\n"
+            "A simple utility application for managing PC maintenance tools "
+            "and converting Office files to the latest format.\n\n"
+            "Created by: Lomel A. Arguelles\n\n"
+            "© 2025"
+        )
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec()
 
