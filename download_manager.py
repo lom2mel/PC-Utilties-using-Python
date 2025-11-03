@@ -9,6 +9,7 @@ from PySide6.QtGui import QFont
 import win32com.client
 import pythoncom
 import shutil
+from datetime import datetime
 
 
 class ConversionWorker(QThread):
@@ -21,6 +22,20 @@ class ConversionWorker(QThread):
         self.path = path
         self.is_file = is_file
         self.cancelled = False
+        self.archive_folder = self.create_archive_folder()
+        self.files_to_archive = []  # Track old files and backups to move
+
+    def create_archive_folder(self):
+        """Create an archive folder on desktop for old and backup files"""
+        desktop = Path.home() / "Desktop"
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        archive_name = f"Office_Archive_{timestamp}"
+        archive_path = desktop / archive_name
+
+        # Create the archive folder
+        archive_path.mkdir(parents=True, exist_ok=True)
+
+        return archive_path
 
     def run(self):
         """Execute the conversion process"""
@@ -28,7 +43,8 @@ class ConversionWorker(QThread):
             'converted': 0,
             'skipped': 0,
             'errors': 0,
-            'error_details': []
+            'error_details': [],
+            'archive_folder': str(self.archive_folder)
         }
 
         if self.is_file:
@@ -52,6 +68,9 @@ class ConversionWorker(QThread):
             except Exception as e:
                 results['errors'] += 1
                 results['error_details'].append(f"{file_path.name}: {str(e)}")
+
+        # Move all archived files to the archive folder
+        self.move_files_to_archive()
 
         self.finished.emit(results)
 
@@ -79,16 +98,13 @@ class ConversionWorker(QThread):
         """Convert a single Office file to the latest format using COM automation"""
         extension = file_path.suffix.lower()
 
-        # Create backup
-        backup_path = file_path.with_suffix(file_path.suffix + '.backup')
-
         # Initialize COM for this thread
         pythoncom.CoInitialize()
 
-        try:
-            # Create backup before conversion
-            shutil.copy2(file_path, backup_path)
+        backup_path = None
+        conversion_successful = False
 
+        try:
             # Word documents
             if extension in ['.doc', '.docx']:
                 word = None
@@ -105,6 +121,14 @@ class ConversionWorker(QThread):
                     new_path = file_path.with_suffix('.docx')
                     doc.SaveAs2(str(new_path.absolute()), FileFormat=12)
                     doc.Close()
+
+                    conversion_successful = True
+
+                    # If original was .doc, rename it to .backup and archive it
+                    if extension == '.doc' and file_path != new_path:
+                        backup_path = file_path.with_suffix('.doc.backup')
+                        file_path.rename(backup_path)
+                        self.files_to_archive.append(backup_path)
 
                     return True
                 finally:
@@ -128,6 +152,14 @@ class ConversionWorker(QThread):
                     wb.SaveAs(str(new_path.absolute()), FileFormat=51)
                     wb.Close()
 
+                    conversion_successful = True
+
+                    # If original was .xls, rename it to .backup and archive it
+                    if extension == '.xls' and file_path != new_path:
+                        backup_path = file_path.with_suffix('.xls.backup')
+                        file_path.rename(backup_path)
+                        self.files_to_archive.append(backup_path)
+
                     return True
                 finally:
                     if excel:
@@ -150,6 +182,14 @@ class ConversionWorker(QThread):
                     prs.SaveAs(str(new_path.absolute()), FileFormat=24)
                     prs.Close()
 
+                    conversion_successful = True
+
+                    # If original was .ppt, rename it to .backup and archive it
+                    if extension == '.ppt' and file_path != new_path:
+                        backup_path = file_path.with_suffix('.ppt.backup')
+                        file_path.rename(backup_path)
+                        self.files_to_archive.append(backup_path)
+
                     return True
                 finally:
                     if powerpoint:
@@ -158,14 +198,39 @@ class ConversionWorker(QThread):
             return False
 
         except Exception as e:
-            # If backup was created but conversion failed, we might want to restore
-            if backup_path.exists():
-                # Keep the backup for user to investigate
-                pass
+            # If conversion failed and we created a backup, restore the original
+            if backup_path and backup_path.exists() and not conversion_successful:
+                backup_path.rename(file_path)
             raise e
         finally:
             # Uninitialize COM
             pythoncom.CoUninitialize()
+
+    def move_files_to_archive(self):
+        """Move all backup and old files to the archive folder"""
+        for file_path in self.files_to_archive:
+            if file_path.exists():
+                try:
+                    # Preserve the relative directory structure in the archive
+                    # Get the parent directory name to avoid name conflicts
+                    parent_name = file_path.parent.name
+                    dest_dir = self.archive_folder / parent_name
+                    dest_dir.mkdir(parents=True, exist_ok=True)
+
+                    dest_path = dest_dir / file_path.name
+
+                    # Handle name conflicts by adding a number
+                    counter = 1
+                    original_dest = dest_path
+                    while dest_path.exists():
+                        dest_path = original_dest.parent / f"{original_dest.stem}_{counter}{original_dest.suffix}"
+                        counter += 1
+
+                    # Move the file
+                    shutil.move(str(file_path), str(dest_path))
+                except Exception:
+                    # If we can't move a file, just skip it
+                    pass
 
     def cancel(self):
         """Cancel the conversion process"""
@@ -510,7 +575,15 @@ class DownloadManager(QWidget):
             msg.setWindowTitle("Conversion Completed Successfully")
 
         msg.setText(message)
-        msg.setInformativeText("Backup files were created with .backup extension.\n\nYou can delete them once you've verified the converted files.")
+
+        # Update informative text to include archive folder location
+        archive_folder = results.get('archive_folder', 'Desktop')
+        info_text = f"Backup files (.backup) have been moved to:\n{archive_folder}\n\n"
+        info_text += "All backup files are organized in this folder on your Desktop.\n"
+        info_text += "Your working directories now contain only the new format files (.docx, .xlsx, .pptx).\n\n"
+        info_text += "You can delete the archive folder once you've verified the converted files work correctly."
+
+        msg.setInformativeText(info_text)
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec()
 
