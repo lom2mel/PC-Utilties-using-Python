@@ -15,6 +15,7 @@ from datetime import datetime
 class ConversionWorker(QThread):
     """Worker thread for converting Office files"""
     progress = Signal(int, int, str)  # current, total, current_file
+    sub_progress = Signal(str, int)  # status_message, percentage (0-100)
     finished = Signal(dict)  # results dictionary
 
     def __init__(self, path, is_file=False):
@@ -109,16 +110,21 @@ class ConversionWorker(QThread):
             if extension in ['.doc', '.docx']:
                 word = None
                 try:
+                    self.sub_progress.emit("Initializing Microsoft Word...", 10)
                     word = win32com.client.Dispatch("Word.Application")
                     word.Visible = False
                     word.DisplayAlerts = False
 
                     # Open the document
+                    self.sub_progress.emit(f"Opening {file_path.name}...", 25)
                     doc = word.Documents.Open(str(file_path.absolute()))
 
                     # Save as .docx (Office 365 format)
                     # wdFormatXMLDocument = 12 (docx format)
+                    self.sub_progress.emit("Converting to latest format...", 50)
                     new_path = file_path.with_suffix('.docx')
+
+                    self.sub_progress.emit("Saving converted file...", 75)
                     doc.SaveAs2(str(new_path.absolute()), FileFormat=12)
                     doc.Close()
 
@@ -126,10 +132,12 @@ class ConversionWorker(QThread):
 
                     # If original was .doc, rename it to .backup and archive it
                     if extension == '.doc' and file_path != new_path:
+                        self.sub_progress.emit("Creating backup...", 90)
                         backup_path = file_path.with_suffix('.doc.backup')
                         file_path.rename(backup_path)
                         self.files_to_archive.append(backup_path)
 
+                    self.sub_progress.emit("Completed!", 100)
                     return True
                 finally:
                     if word:
@@ -139,16 +147,21 @@ class ConversionWorker(QThread):
             elif extension in ['.xls', '.xlsx']:
                 excel = None
                 try:
+                    self.sub_progress.emit("Initializing Microsoft Excel...", 10)
                     excel = win32com.client.Dispatch("Excel.Application")
                     excel.Visible = False
                     excel.DisplayAlerts = False
 
                     # Open the workbook
+                    self.sub_progress.emit(f"Opening {file_path.name}...", 25)
                     wb = excel.Workbooks.Open(str(file_path.absolute()))
 
                     # Save as .xlsx (Office 365 format)
                     # xlOpenXMLWorkbook = 51 (xlsx format)
+                    self.sub_progress.emit("Converting to latest format...", 50)
                     new_path = file_path.with_suffix('.xlsx')
+
+                    self.sub_progress.emit("Saving converted file...", 75)
                     wb.SaveAs(str(new_path.absolute()), FileFormat=51)
                     wb.Close()
 
@@ -156,10 +169,12 @@ class ConversionWorker(QThread):
 
                     # If original was .xls, rename it to .backup and archive it
                     if extension == '.xls' and file_path != new_path:
+                        self.sub_progress.emit("Creating backup...", 90)
                         backup_path = file_path.with_suffix('.xls.backup')
                         file_path.rename(backup_path)
                         self.files_to_archive.append(backup_path)
 
+                    self.sub_progress.emit("Completed!", 100)
                     return True
                 finally:
                     if excel:
@@ -169,16 +184,21 @@ class ConversionWorker(QThread):
             elif extension in ['.ppt', '.pptx']:
                 powerpoint = None
                 try:
+                    self.sub_progress.emit("Initializing Microsoft PowerPoint...", 10)
                     powerpoint = win32com.client.Dispatch("PowerPoint.Application")
                     powerpoint.Visible = False
                     powerpoint.DisplayAlerts = False
 
                     # Open the presentation
+                    self.sub_progress.emit(f"Opening {file_path.name}...", 25)
                     prs = powerpoint.Presentations.Open(str(file_path.absolute()), WithWindow=False)
 
                     # Save as .pptx (Office 365 format)
                     # ppSaveAsOpenXMLPresentation = 24 (pptx format)
+                    self.sub_progress.emit("Converting to latest format...", 50)
                     new_path = file_path.with_suffix('.pptx')
+
+                    self.sub_progress.emit("Saving converted file...", 75)
                     prs.SaveAs(str(new_path.absolute()), FileFormat=24)
                     prs.Close()
 
@@ -186,10 +206,12 @@ class ConversionWorker(QThread):
 
                     # If original was .ppt, rename it to .backup and archive it
                     if extension == '.ppt' and file_path != new_path:
+                        self.sub_progress.emit("Creating backup...", 90)
                         backup_path = file_path.with_suffix('.ppt.backup')
                         file_path.rename(backup_path)
                         self.files_to_archive.append(backup_path)
 
+                    self.sub_progress.emit("Completed!", 100)
                     return True
                 finally:
                     if powerpoint:
@@ -525,9 +547,12 @@ class DownloadManager(QWidget):
         self.progress_dialog.setWindowModality(Qt.WindowModal)
         self.progress_dialog.setMinimumDuration(0)
         self.progress_dialog.setValue(0)
+        self.progress_dialog.setAutoClose(False)
+        self.progress_dialog.setAutoReset(False)
 
         # Connect signals
         self.worker.progress.connect(self.update_conversion_progress)
+        self.worker.sub_progress.connect(self.update_sub_progress)
         self.worker.finished.connect(self.conversion_finished)
         self.progress_dialog.canceled.connect(self.cancel_conversion)
 
@@ -535,12 +560,35 @@ class DownloadManager(QWidget):
         self.worker.start()
 
     def update_conversion_progress(self, current, total, current_file):
-        """Update the progress dialog"""
+        """Update the progress dialog with overall progress"""
         if total > 0:
             percentage = int((current / total) * 100)
             self.progress_dialog.setValue(percentage)
             self.progress_dialog.setMaximum(100)
-            self.progress_dialog.setLabelText(f"Converting {current} of {total} files...\n\n{Path(current_file).name}")
+            # Store current file info for sub-progress updates
+            self.current_file_name = Path(current_file).name
+            self.current_file_num = current
+            self.total_files = total
+            # Initial message before sub-progress starts
+            self.progress_dialog.setLabelText(
+                f"File {current} of {total}: {self.current_file_name}\n\n"
+                f"Preparing..."
+            )
+
+    def update_sub_progress(self, status_message, sub_percentage):
+        """Update the progress dialog with sub-task progress"""
+        if hasattr(self, 'current_file_num') and hasattr(self, 'total_files'):
+            # Combine overall progress with sub-progress for smoother visual feedback
+            overall_percentage = int(((self.current_file_num - 1) / self.total_files) * 100)
+            file_weight = 100 / self.total_files
+            combined_percentage = int(overall_percentage + (sub_percentage / 100) * file_weight)
+
+            self.progress_dialog.setValue(combined_percentage)
+            self.progress_dialog.setLabelText(
+                f"File {self.current_file_num} of {self.total_files}: {self.current_file_name}\n\n"
+                f"{status_message}\n"
+                f"Progress: {sub_percentage}%"
+            )
 
     def cancel_conversion(self):
         """Cancel the conversion process"""
