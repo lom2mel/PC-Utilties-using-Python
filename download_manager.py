@@ -548,8 +548,14 @@ class DownloadManager(QWidget):
             "Version 1.0\n\n"
             "A simple utility application for managing PC maintenance tools "
             "and converting Office files to the latest format.\n\n"
-            "Created by: Lomel A. Arguelles\n\n"
-            "© 2025"
+            "Created by: Lomel A. Arguelles\n"
+            "© 2025\n\n"
+            "---\n\n"
+            "This application uses PySide6 (Qt for Python),\n"
+            "licensed under the GNU Lesser General Public License v3.0.\n\n"
+            "PySide6 Repository:\n"
+            "https://code.qt.io/cgit/pyside/pyside-setup.git/\n\n"
+            "For license details, see LICENSE.txt included with this application."
         )
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec()

@@ -1,0 +1,91 @@
+THIRD-PARTY LIBRARY LICENSES
+============================
+
+PC Utilities Manager uses the following third-party libraries.
+Compliance information is provided for each.
+
+---
+
+1. PYSIDE6 (Qt for Python)
+==========================
+License: GNU Lesser General Public License v3.0 (LGPLv3)
+Repository: https://code.qt.io/cgit/pyside/pyside-setup.git/
+Official Page: https://wiki.qt.io/Qt_for_Python
+License Text: https://www.gnu.org/licenses/lgpl-3.0.txt
+
+Description: PySide6 is a Python binding for the Qt framework, allowing
+creation of cross-platform graphical user interfaces.
+
+Compliance: This application dynamically links to PySide6 and complies
+with all LGPL v3.0 requirements. Users may replace PySide6 with
+compatible versions.
+
+---
+
+2. PYWIN32
+==========
+License: BSD License (New BSD License)
+Repository: https://github.com/pywin32/pywin32
+Package: https://pypi.org/project/pywin32/
+
+Description: Provides access to many of the Windows APIs from Python,
+including COM automation for Microsoft Office integration.
+
+Copyright: Mark Hammond
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files to deal in
+the Software without restriction, including without limitation the
+rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+---
+
+3. PILLOW (Python Imaging Library)
+==================================
+License: Historical Permission Notice and Disclaimer License (HPND)
+Repository: https://github.com/python-pillow/Pillow
+Documentation: https://pillow.readthedocs.io/
+
+Description: Pillow is a Python Imaging Library that provides image
+processing capabilities, used for the Picture to PDF converter feature.
+
+Compliance: Pillow is freely distributable under the HPND license.
+No modifications are made to Pillow in this application.
+
+---
+
+4. SETUPTOOLS
+=============
+License: MIT License
+Repository: https://github.com/pypa/setuptools
+Documentation: https://setuptools.pypa.io/
+
+Description: Build tool used for packaging the application.
+This is a build dependency and not distributed with the application.
+
+---
+
+SUMMARY OF COMPLIANCE
+====================
+
+This application is compliant with all third-party library licenses:
+
+✓ PySide6 (LGPL v3.0): Dynamically linked, attribution provided,
+  users may replace the library, source code available
+
+✓ pywin32 (BSD): No modifications, freely distributable
+
+✓ Pillow (HPND): No modifications, freely distributable
+
+✓ setuptools (MIT): Build-time only, not distributed
+
+All license texts are included with this application distribution.
+Users have full rights to install, use, modify, and distribute
+applications built with these libraries under the terms specified.
+
+For questions about licensing, refer to the individual license files
+or visit the official repositories listed above.

@@ -200,7 +200,27 @@ Current Version: 1.0.0
 
 ## License
 
-This software is provided as-is for personal use.
+This software is provided under a proprietary license for the application code itself.
+
+However, this application uses **PySide6**, which is licensed under the **GNU Lesser General Public License v3.0 (LGPLv3)**.
+
+### What This Means
+
+- ✅ You can use this application for **personal or commercial purposes**
+- ✅ Your proprietary code remains **closed source**
+- ✅ You can **sell or distribute** this application freely
+- ⚠️ You must include a copy of `LICENSE.txt` with distributions
+- ⚠️ You must provide **attribution to PySide6**
+- ⚠️ Users have the right to **replace PySide6** with compatible versions
+
+### PySide6 License Details
+
+- **License**: GNU Lesser General Public License v3.0 (LGPLv3)
+- **Source Code**: https://code.qt.io/cgit/pyside/pyside-setup.git/
+- **License Text**: https://www.gnu.org/licenses/lgpl-3.0.html
+- **Wiki**: https://wiki.qt.io/Qt_for_Python
+
+For detailed compliance information, see `LICENSE.txt` included with this application.
 
 ## Support
 

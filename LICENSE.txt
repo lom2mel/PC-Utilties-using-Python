@@ -1,0 +1,58 @@
+PC UTILITIES MANAGER - LICENSE INFORMATION
+============================================
+
+This application uses PySide6, which is licensed under the GNU Lesser General Public License v3.0 (LGPLv3).
+
+ABOUT LGPL V3
+=============
+
+The GNU Lesser General Public License (LGPL) is a free software license that allows this application to use the PySide6 library while keeping the application's source code proprietary.
+
+Key Points:
+- You CAN use this software commercially and keep your source code closed
+- You MUST include a copy of the LGPL license
+- You MUST provide attribution to PySide6
+- You MUST allow users to replace PySide6 with a compatible version
+
+PYSIDE6 INFORMATION
+===================
+
+PySide6 (Qt for Python) is licensed under LGPLv3
+Repository: https://code.qt.io/cgit/pyside/pyside-setup.git/
+License: https://www.gnu.org/licenses/lgpl-3.0.html
+Official Wiki: https://wiki.qt.io/Qt_for_Python
+
+THIRD-PARTY LIBRARIES
+====================
+
+This application also uses:
+- pywin32: BSD License
+- Pillow (PIL): HPND License (Historical Permission Notice and Disclaimer)
+
+COMPLIANCE STATEMENT
+====================
+
+This PC Utilities Manager application complies with LGPLv3 by:
+
+1. Dynamically linking to PySide6 (not statically compiled)
+2. Including this license file with all distributions
+3. Providing clear attribution to PySide6
+4. Allowing users to replace PySide6 with compatible versions
+5. Not modifying the PySide6 source code
+
+YOUR APPLICATION CODE
+====================
+
+The source code for PC Utilities Manager (download_manager.py, setup.py, etc.)
+is provided under a separate license. See the main LICENSE file in the application
+directory for details on the application's own license.
+
+IMPORTANT NOTE
+==============
+
+Users have the right to:
+- Run this application for any purpose
+- Replace the PySide6 libraries with compatible versions
+- Study how the application works (if source code is available)
+
+For more information about LGPL, visit: https://www.gnu.org/licenses/lgpl-3.0.html

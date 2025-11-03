@@ -4,7 +4,8 @@
       "Bash(pip install:*)",
       "Bash(python:*)",
       "Read(C:\\Users\\Lomel\\OneDrive - MSFT\\Pictures\\Screenshots/**)",
-      "Bash(pip show:*)"
+      "Bash(pip show:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
