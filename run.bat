@@ -1,9 +1,7 @@
 @echo off
+:: Change to the directory where this batch file is located
+cd /d "%~dp0"
+
 echo Starting PC Utilities Manager...
-python download_manager.py
-if %errorlevel% neq 0 (
-    echo.
-    echo ERROR: Failed to run the application
-    echo Make sure you have run install.bat first
-    pause
-)
+start "" pythonw download_manager.py
+exit

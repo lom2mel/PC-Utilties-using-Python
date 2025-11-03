@@ -1,4 +1,7 @@
 @echo off
+:: Change to the directory where this batch file is located
+cd /d "%~dp0"
+
 echo ===============================================
 echo PC Utilities Manager - Installation Script
 echo ===============================================
@@ -11,7 +14,7 @@ if %errorlevel% neq 0 (
     echo Please install Python 3.8 or higher from https://www.python.org/
     echo Make sure to check "Add Python to PATH" during installation
     pause
-    exit /b 1
+    goto :fallback_to_simple
 )
 
 echo Python detected. Checking version...
@@ -24,7 +27,7 @@ if %errorlevel% neq 0 (
     echo ERROR: pip is not available
     echo Please reinstall Python with pip included
     pause
-    exit /b 1
+    goto :fallback_to_simple
 )
 
 echo Installing dependencies...
@@ -43,8 +46,7 @@ if %errorlevel% neq 0 (
     python -m pip install PySide6
     if %errorlevel% neq 0 (
         echo ERROR: Failed to install PySide6
-        pause
-        exit /b 1
+        goto :fallback_to_simple
     )
 )
 
@@ -55,16 +57,25 @@ if %errorlevel% neq 0 (
     python -m pip install pywin32
     if %errorlevel% neq 0 (
         echo ERROR: Failed to install pywin32
-        pause
-        exit /b 1
+        goto :fallback_to_simple
+    )
+)
+
+echo Installing Pillow...
+python -m pip install Pillow>=10.0.0
+if %errorlevel% neq 0 (
+    echo Warning: Failed to install Pillow>=10.0.0, trying lower version...
+    python -m pip install Pillow
+    if %errorlevel% neq 0 (
+        echo ERROR: Failed to install Pillow
+        goto :fallback_to_simple
     )
 )
 
 if %errorlevel% neq 0 (
     echo.
     echo ERROR: Failed to install dependencies
-    pause
-    exit /b 1
+    goto :fallback_to_simple
 )
 
 echo.
@@ -78,3 +89,17 @@ echo   OR
 echo   2. Run: python download_manager.py
 echo.
 pause
+exit /b 0
+
+:fallback_to_simple
+echo.
+echo ===============================================
+echo Attempting fallback to simple installation...
+echo ===============================================
+echo.
+echo The standard installation encountered issues.
+echo Trying install_simple.bat instead...
+echo.
+pause
+call install_simple.bat
+exit /b %errorlevel%

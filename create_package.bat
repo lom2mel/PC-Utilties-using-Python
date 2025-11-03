@@ -26,16 +26,18 @@ echo.
 REM Copy all necessary files
 copy /Y "download_manager.py" "%OUTPUT_DIR%\" >nul
 copy /Y "requirements.txt" "%OUTPUT_DIR%\" >nul
-copy /Y "setup.py" "%OUTPUT_DIR%\" >nul
+copy /Y "auto_setup.bat" "%OUTPUT_DIR%\" >nul
 copy /Y "install.bat" "%OUTPUT_DIR%\" >nul
+copy /Y "install_simple.bat" "%OUTPUT_DIR%\" >nul
 copy /Y "run.bat" "%OUTPUT_DIR%\" >nul
 copy /Y "README.md" "%OUTPUT_DIR%\" >nul
 
 echo Files copied:
 echo   - download_manager.py
 echo   - requirements.txt
-echo   - setup.py
+echo   - auto_setup.bat (ONE-CLICK INSTALLER)
 echo   - install.bat
+echo   - install_simple.bat
 echo   - run.bat
 echo   - README.md
 echo.
@@ -47,16 +49,29 @@ echo ====================================================
 echo PC UTILITIES MANAGER - QUICK START GUIDE
 echo ====================================================
 echo.
-echo STEP 1: Install Python
-echo    - Go to https://www.python.org/downloads/
-echo    - Download Python 3.8 or higher
-echo    - IMPORTANT: Check "Add Python to PATH" during install
+echo ONE-CLICK INSTALLATION ^(EASIEST METHOD^):
 echo.
-echo STEP 2: Install Dependencies
+echo    1. Right-click "auto_setup.bat"
+echo    2. Select "Run as administrator"
+echo    3. Done! Everything installs automatically!
+echo.
+echo The auto_setup.bat will:
+echo    - Download and install Python automatically
+echo    - Add Python to PATH
+echo    - Install all dependencies
+echo    - Create Desktop shortcut
+echo    - Create Start Menu shortcut
+echo    - Launch the application
+echo.
+echo ====================================================
+echo.
+echo MANUAL INSTALLATION ^(If Python already installed^):
+echo.
+echo STEP 1: Install Dependencies
 echo    - Double-click "install.bat"
 echo    - Wait for installation to complete
 echo.
-echo STEP 3: Run the Application
+echo STEP 2: Run the Application
 echo    - Double-click "run.bat"
 echo.
 echo ====================================================
@@ -66,11 +81,12 @@ echo    - Download Avast Antivirus
 echo    - Scan files with VirusTotal
 echo    - Download CCleaner
 echo    - Convert Office files to latest format
+echo    - Convert pictures to PDF
 echo.
 echo REQUIREMENTS:
 echo    - Windows 10 or later
-echo    - Python 3.8 or higher
-echo    - Microsoft Office ^(for file converter^)
+echo    - Internet connection ^(for auto_setup.bat^)
+echo    - Microsoft Office ^(for Office file converter^)
 echo.
 echo For detailed instructions, see README.md
 echo ====================================================

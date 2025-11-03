@@ -11,6 +11,82 @@ import win32com.client
 import pythoncom
 import shutil
 from datetime import datetime
+from PIL import Image
+
+
+class ImageToPdfWorker(QThread):
+    """Worker thread for converting images to PDF"""
+    progress = Signal(int, int, str)  # current, total, current_file
+    finished = Signal(dict)  # results dictionary
+
+    def __init__(self, image_files, output_path):
+        super().__init__()
+        self.image_files = image_files
+        self.output_path = output_path
+        self.cancelled = False
+
+    def run(self):
+        """Execute the image to PDF conversion"""
+        results = {
+            'success': False,
+            'error': None,
+            'output_path': self.output_path
+        }
+
+        try:
+            # Convert images to PDF
+            images = []
+
+            for idx, image_file in enumerate(self.image_files):
+                if self.cancelled:
+                    results['error'] = "Conversion cancelled by user"
+                    break
+
+                self.progress.emit(idx + 1, len(self.image_files), str(image_file))
+
+                try:
+                    # Open and convert image
+                    img = Image.open(image_file)
+
+                    # Convert to RGB if necessary (PDF doesn't support RGBA or other modes)
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        # Create white background
+                        background = Image.new('RGB', img.size, (255, 255, 255))
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
+                        background.paste(img, mask=img.split()[-1] if img.mode in ('RGBA', 'LA') else None)
+                        img = background
+                    elif img.mode != 'RGB':
+                        img = img.convert('RGB')
+
+                    images.append(img)
+                except Exception as e:
+                    results['error'] = f"Error processing {Path(image_file).name}: {str(e)}"
+                    break
+
+            if images and not self.cancelled:
+                # Save as PDF
+                if len(images) == 1:
+                    images[0].save(self.output_path, 'PDF', resolution=100.0)
+                else:
+                    images[0].save(
+                        self.output_path,
+                        'PDF',
+                        resolution=100.0,
+                        save_all=True,
+                        append_images=images[1:]
+                    )
+
+                results['success'] = True
+
+        except Exception as e:
+            results['error'] = str(e)
+
+        self.finished.emit(results)
+
+    def cancel(self):
+        """Cancel the conversion process"""
+        self.cancelled = True
 
 
 class ConversionWorker(QThread):
@@ -386,6 +462,28 @@ class DownloadManager(QWidget):
         self.converter_button.clicked.connect(self.open_converter_dialog)
         layout.addWidget(self.converter_button)
 
+        # Picture to PDF Converter Button
+        self.picture_to_pdf_button = QPushButton("Convert Pictures to PDF")
+        self.picture_to_pdf_button.setStyleSheet("""
+            QPushButton {
+                background-color: #D83B01;
+                color: white;
+                border: none;
+                padding: 10px;
+                font-size: 14px;
+                font-weight: bold;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #C13200;
+            }
+            QPushButton:pressed {
+                background-color: #A32900;
+            }
+        """)
+        self.picture_to_pdf_button.clicked.connect(self.open_picture_to_pdf_dialog)
+        layout.addWidget(self.picture_to_pdf_button)
+
         # Info label
         info_label = QLabel("Files will be downloaded to your Downloads folder")
         info_label.setAlignment(Qt.AlignCenter)
@@ -663,6 +761,104 @@ class DownloadManager(QWidget):
         msg.exec()
 
         self.status_label.setText("Conversion complete!")
+
+    def open_picture_to_pdf_dialog(self):
+        """Open dialog to select images and convert to PDF"""
+        # Select image files
+        file_dialog = QFileDialog()
+        image_files, _ = file_dialog.getOpenFileNames(
+            self,
+            "Select Images to Convert to PDF",
+            "",
+            "Image Files (*.jpg *.jpeg *.png *.bmp *.gif *.tiff *.tif);;All Files (*.*)"
+        )
+
+        if not image_files:
+            return
+
+        # Ask for output PDF location
+        output_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save PDF As",
+            str(Path.home() / "Desktop" / "converted_images.pdf"),
+            "PDF Files (*.pdf)"
+        )
+
+        if not output_path:
+            return
+
+        # Ensure .pdf extension
+        if not output_path.lower().endswith('.pdf'):
+            output_path += '.pdf'
+
+        # Start conversion
+        self.start_picture_to_pdf_conversion(image_files, output_path)
+
+    def start_picture_to_pdf_conversion(self, image_files, output_path):
+        """Start the image to PDF conversion process"""
+        self.status_label.setText("Converting images to PDF...")
+
+        # Create worker thread
+        self.image_worker = ImageToPdfWorker(image_files, output_path)
+
+        # Create progress dialog
+        self.image_progress_dialog = QProgressDialog(
+            "Initializing...",
+            "Cancel",
+            0,
+            len(image_files),
+            self
+        )
+        self.image_progress_dialog.setWindowTitle("Converting Images to PDF")
+        self.image_progress_dialog.setWindowModality(Qt.WindowModal)
+        self.image_progress_dialog.setMinimumDuration(0)
+        self.image_progress_dialog.setValue(0)
+        self.image_progress_dialog.setAutoClose(False)
+        self.image_progress_dialog.setAutoReset(False)
+
+        # Connect signals
+        self.image_worker.progress.connect(self.update_image_conversion_progress)
+        self.image_worker.finished.connect(self.image_conversion_finished)
+        self.image_progress_dialog.canceled.connect(self.cancel_image_conversion)
+
+        # Start conversion
+        self.image_worker.start()
+
+    def update_image_conversion_progress(self, current, total, current_file):
+        """Update the progress dialog for image conversion"""
+        self.image_progress_dialog.setValue(current)
+        self.image_progress_dialog.setLabelText(
+            f"Processing image {current} of {total}:\n{Path(current_file).name}"
+        )
+
+    def cancel_image_conversion(self):
+        """Cancel the image conversion process"""
+        if hasattr(self, 'image_worker'):
+            self.image_worker.cancel()
+            self.status_label.setText("Image conversion cancelled")
+
+    def image_conversion_finished(self, results):
+        """Show image conversion results"""
+        self.image_progress_dialog.close()
+
+        if results['success']:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setWindowTitle("Conversion Successful")
+            msg.setText("Images successfully converted to PDF!")
+            msg.setInformativeText(f"PDF saved to:\n{results['output_path']}")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+            self.status_label.setText("Image conversion complete!")
+        else:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Conversion Failed")
+            msg.setText("Failed to convert images to PDF")
+            msg.setInformativeText(f"Error: {results['error']}")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+            self.status_label.setText("Image conversion failed")
 
 
 def main():
