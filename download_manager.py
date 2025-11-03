@@ -6,9 +6,8 @@ from PySide6.QtWidgets import (QApplication, QWidget, QVBoxLayout, QPushButton,
                                 QLabel, QMessageBox, QFileDialog, QProgressDialog)
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
-from docx import Document
-from openpyxl import load_workbook, Workbook
-from pptx import Presentation
+import win32com.client
+import pythoncom
 import shutil
 
 
@@ -77,55 +76,84 @@ class ConversionWorker(QThread):
         return office_files
 
     def convert_file(self, file_path):
-        """Convert a single Office file to the latest format"""
+        """Convert a single Office file to the latest format using COM automation"""
         extension = file_path.suffix.lower()
 
         # Create backup
         backup_path = file_path.with_suffix(file_path.suffix + '.backup')
 
+        # Initialize COM for this thread
+        pythoncom.CoInitialize()
+
         try:
+            # Create backup before conversion
+            shutil.copy2(file_path, backup_path)
+
             # Word documents
             if extension in ['.doc', '.docx']:
-                doc = Document(str(file_path))
+                word = None
+                try:
+                    word = win32com.client.Dispatch("Word.Application")
+                    word.Visible = False
+                    word.DisplayAlerts = False
 
-                # Create backup before conversion
-                shutil.copy2(file_path, backup_path)
+                    # Open the document
+                    doc = word.Documents.Open(str(file_path.absolute()))
 
-                # Save as .docx (latest format)
-                new_path = file_path.with_suffix('.docx')
-                doc.save(str(new_path))
+                    # Save as .docx (Office 365 format)
+                    # wdFormatXMLDocument = 12 (docx format)
+                    new_path = file_path.with_suffix('.docx')
+                    doc.SaveAs2(str(new_path.absolute()), FileFormat=12)
+                    doc.Close()
 
-                # If original was .doc, we can optionally remove it
-                if extension == '.doc' and new_path != file_path:
-                    pass  # Keep both files
-
-                return True
+                    return True
+                finally:
+                    if word:
+                        word.Quit()
 
             # Excel spreadsheets
             elif extension in ['.xls', '.xlsx']:
-                wb = load_workbook(str(file_path))
+                excel = None
+                try:
+                    excel = win32com.client.Dispatch("Excel.Application")
+                    excel.Visible = False
+                    excel.DisplayAlerts = False
 
-                # Create backup before conversion
-                shutil.copy2(file_path, backup_path)
+                    # Open the workbook
+                    wb = excel.Workbooks.Open(str(file_path.absolute()))
 
-                # Save as .xlsx (latest format)
-                new_path = file_path.with_suffix('.xlsx')
-                wb.save(str(new_path))
+                    # Save as .xlsx (Office 365 format)
+                    # xlOpenXMLWorkbook = 51 (xlsx format)
+                    new_path = file_path.with_suffix('.xlsx')
+                    wb.SaveAs(str(new_path.absolute()), FileFormat=51)
+                    wb.Close()
 
-                return True
+                    return True
+                finally:
+                    if excel:
+                        excel.Quit()
 
             # PowerPoint presentations
             elif extension in ['.ppt', '.pptx']:
-                prs = Presentation(str(file_path))
+                powerpoint = None
+                try:
+                    powerpoint = win32com.client.Dispatch("PowerPoint.Application")
+                    powerpoint.Visible = False
+                    powerpoint.DisplayAlerts = False
 
-                # Create backup before conversion
-                shutil.copy2(file_path, backup_path)
+                    # Open the presentation
+                    prs = powerpoint.Presentations.Open(str(file_path.absolute()), WithWindow=False)
 
-                # Save as .pptx (latest format)
-                new_path = file_path.with_suffix('.pptx')
-                prs.save(str(new_path))
+                    # Save as .pptx (Office 365 format)
+                    # ppSaveAsOpenXMLPresentation = 24 (pptx format)
+                    new_path = file_path.with_suffix('.pptx')
+                    prs.SaveAs(str(new_path.absolute()), FileFormat=24)
+                    prs.Close()
 
-                return True
+                    return True
+                finally:
+                    if powerpoint:
+                        powerpoint.Quit()
 
             return False
 
@@ -135,6 +163,9 @@ class ConversionWorker(QThread):
                 # Keep the backup for user to investigate
                 pass
             raise e
+        finally:
+            # Uninitialize COM
+            pythoncom.CoUninitialize()
 
     def cancel(self):
         """Cancel the conversion process"""
@@ -311,8 +342,32 @@ class DownloadManager(QWidget):
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec()
 
+    def check_office_installed(self):
+        """Check if Microsoft Office is installed"""
+        try:
+            pythoncom.CoInitialize()
+            # Try to create Word instance
+            word = win32com.client.Dispatch("Word.Application")
+            word.Quit()
+            pythoncom.CoUninitialize()
+            return True
+        except:
+            pythoncom.CoUninitialize()
+            return False
+
     def open_converter_dialog(self):
         """Open dialog to select conversion type"""
+        # Check if Microsoft Office is installed
+        if not self.check_office_installed():
+            QMessageBox.critical(
+                self,
+                "Microsoft Office Required",
+                "Microsoft Office must be installed on this computer to use the file converter.\n\n"
+                "This feature uses Microsoft Office COM automation to convert files to the latest format.\n\n"
+                "Please install Microsoft Office and try again."
+            )
+            return
+
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Question)
         msg.setWindowTitle("Office File Converter")
