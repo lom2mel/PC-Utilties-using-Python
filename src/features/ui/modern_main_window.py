@@ -215,7 +215,7 @@ class ModernDownloadManager(QWidget):
                 color: white;
                 border: 1px solid rgba(255, 255, 255, 0.3);
                 border-radius: 8px;
-                padding: 8px 20px;
+                padding: 10px 24px;
                 font-size: 11px;
                 font-weight: bold;
             }
@@ -224,7 +224,8 @@ class ModernDownloadManager(QWidget):
             }
         """)
         about_btn.clicked.connect(self.show_about)
-        about_btn.setFixedWidth(100)
+        about_btn.setMinimumWidth(80)
+        about_btn.setMinimumHeight(36)
         layout.addWidget(about_btn, alignment=Qt.AlignRight | Qt.AlignTop)
 
         header.setLayout(layout)
