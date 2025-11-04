@@ -1,6 +1,18 @@
 # PC Utilities Manager
 
-A Windows desktop application that helps you download essential PC utilities and convert Microsoft Office files to the latest format.
+A modern Windows desktop application with a professional UI that helps you download essential PC utilities and convert Microsoft Office files to the latest format.
+
+## 🎨 Version 2.0 - Modern UI
+
+**NEW!** Completely redesigned with a professional, modern interface featuring:
+- ✨ Beautiful card-based layout
+- 🎯 Visual grouping (Security & File Converters)
+- 🖱️ Interactive hover effects
+- 📱 Responsive design (900x700)
+- ♿ Improved accessibility
+- 🎨 Professional color scheme with gradient header
+
+**Quick Start**: [QUICK_START.md](QUICK_START.md) | **Design Docs**: [UI_REDESIGN.md](UI_REDESIGN.md)
 
 ## Features
 
