@@ -1,12 +1,14 @@
 import os
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="pc-utilities-manager",
     version="1.0.0",
     author="Lomel A. Arguelles",
     description="PC Utilities Manager - Download utilities and convert Office files",
-    long_description=open("README.md", encoding="utf-8").read() if os.path.exists("README.md") else "",
+    long_description=open("README.md", encoding="utf-8").read()
+    if os.path.exists("README.md")
+    else "",
     long_description_content_type="text/markdown",
     url="https://github.com/yourusername/pc-utilities-manager",
     py_modules=["download_manager"],
@@ -23,7 +25,7 @@ setup(
     },
     include_package_data=True,
     package_data={
-        '': ['LICENSE.txt', 'README.md'],
+        "": ["LICENSE.txt", "README.md"],
     },
     classifiers=[
         "Development Status :: 4 - Beta",
