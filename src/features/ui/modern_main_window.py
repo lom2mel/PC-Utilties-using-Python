@@ -14,9 +14,11 @@ from PySide6.QtWidgets import (
     QProgressDialog,
     QFrame,
     QScrollArea,
+    QMenuBar,
+    QMainWindow,
 )
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont, QIcon, QPalette, QColor
+from PySide6.QtGui import QFont, QIcon, QPalette, QColor, QAction, QKeySequence
 import pythoncom
 import win32com.client
 
@@ -109,7 +111,7 @@ class SectionHeader(QWidget):
         self.setLayout(layout)
 
 
-class ModernDownloadManager(QWidget):
+class ModernDownloadManager(QMainWindow):
     """Modern redesigned PC Utilities Manager with professional UI/UX."""
 
     def __init__(self):
@@ -134,6 +136,13 @@ class ModernDownloadManager(QWidget):
                 font-family: 'Segoe UI', Arial, sans-serif;
             }
         """)
+
+        # Create menu bar
+        self.create_menu_bar()
+
+        # Central widget
+        central_widget = QWidget()
+        self.setCentralWidget(central_widget)
 
         # Main layout with scroll area
         main_layout = QVBoxLayout()
@@ -173,7 +182,47 @@ class ModernDownloadManager(QWidget):
         scroll_area.setWidget(content_widget)
         main_layout.addWidget(scroll_area)
 
-        self.setLayout(main_layout)
+        central_widget.setLayout(main_layout)
+
+    def create_menu_bar(self):
+        """Create menu bar with File and Help menus."""
+        menubar = self.menuBar()
+
+        # File menu
+        file_menu = menubar.addMenu("&File")
+
+        # Office Converter action
+        converter_action = QAction("&Office File Converter", self)
+        converter_action.setShortcut(QKeySequence("Ctrl+O"))
+        converter_action.setStatusTip("Convert Office files to latest format")
+        converter_action.triggered.connect(self.open_converter_dialog)
+        file_menu.addAction(converter_action)
+
+        # Picture to PDF action
+        pdf_action = QAction("&Picture to PDF", self)
+        pdf_action.setShortcut(QKeySequence("Ctrl+P"))
+        pdf_action.setStatusTip("Convert images to PDF")
+        pdf_action.triggered.connect(self.open_picture_to_pdf_dialog)
+        file_menu.addAction(pdf_action)
+
+        file_menu.addSeparator()
+
+        # Exit action
+        exit_action = QAction("E&xit", self)
+        exit_action.setShortcut(QKeySequence("Ctrl+Q"))
+        exit_action.setStatusTip("Exit application")
+        exit_action.triggered.connect(self.close)
+        file_menu.addAction(exit_action)
+
+        # Help menu
+        help_menu = menubar.addMenu("&Help")
+
+        # About action
+        about_action = QAction("&About", self)
+        about_action.setShortcut(QKeySequence("F1"))
+        about_action.setStatusTip("About this application")
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
 
     def create_header(self) -> QWidget:
         """Create modern header with branding."""
