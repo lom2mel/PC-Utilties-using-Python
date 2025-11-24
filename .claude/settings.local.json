@@ -5,7 +5,9 @@
       "Bash(python:*)",
       "Read(C:\\Users\\Lomel\\OneDrive - MSFT\\Pictures\\Screenshots/**)",
       "Bash(pip show:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(ruff check:*)",
+      "Bash(move:*)"
     ],
     "deny": [],
     "ask": []
