@@ -125,6 +125,7 @@ class ModernDownloadManager(QMainWindow):
         )
         self.virustotal_url = "https://www.virustotal.com/gui/home/upload"
         self.ccleaner_url = "https://www.ccleaner.com/ccleaner/download/standard"
+        self.speccy_url = "https://www.ccleaner.com/speccy/download/standard"
 
     def init_ui(self):
         """Initialize modern UI with card-based layout."""
@@ -360,6 +361,16 @@ class ModernDownloadManager(QMainWindow):
         ccleaner_card.mousePressEvent = lambda e: self.download_ccleaner()
         cards_layout.addWidget(ccleaner_card, 0, 2)
 
+        # Speccy card
+        speccy_card = ModernCard(
+            "Speccy",
+            "View detailed system information and specifications",
+            "💻",
+            "#00A4EF"
+        )
+        speccy_card.mousePressEvent = lambda e: self.download_speccy()
+        cards_layout.addWidget(speccy_card, 1, 0)
+
         layout.addLayout(cards_layout)
         section.setLayout(layout)
         return section
@@ -455,6 +466,16 @@ class ModernDownloadManager(QMainWindow):
             webbrowser.open(self.ccleaner_url)
             self.update_status("CCleaner download page opened in browser")
             self.show_download_message("CCleaner")
+        except Exception as e:
+            self.update_status(f"Error: {str(e)}", success=False)
+
+    def download_speccy(self):
+        """Download Speccy."""
+        self.update_status("Opening Speccy download page...")
+        try:
+            webbrowser.open(self.speccy_url)
+            self.update_status("Speccy download page opened in browser")
+            self.show_download_message("Speccy")
         except Exception as e:
             self.update_status(f"Error: {str(e)}", success=False)
 

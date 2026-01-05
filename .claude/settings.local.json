@@ -7,7 +7,8 @@
       "Bash(pip show:*)",
       "Bash(curl:*)",
       "Bash(ruff check:*)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []
