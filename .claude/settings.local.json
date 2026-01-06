@@ -8,7 +8,9 @@
       "Bash(curl:*)",
       "Bash(ruff check:*)",
       "Bash(move:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(uv run ruff check:*)",
+      "Bash(uv run pytest:*)"
     ],
     "deny": [],
     "ask": []
