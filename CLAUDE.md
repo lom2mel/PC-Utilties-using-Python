@@ -19,6 +19,265 @@ Avoid building functionality on speculation. Implement features only when they a
 - **Single Responsibility**: Each function, class, and module should have one clear purpose.
 - **Fail Fast**: Check for potential errors early and raise exceptions immediately when issues occur.
 
+## 🎨 FROZEN UI/UX STANDARDS (v2.0)
+
+### Overview
+
+The PC Utilities Manager UI/UX is **FROZEN** as of version 2.0. This means:
+
+- **Visual design is immutable** - No changes to colors, spacing, typography, or layout without architectural review
+- **Design tokens are frozen** - All UI constants are locked and validated at import
+- **Components are standardized** - All UI components use the frozen design system
+- **State is immutable** - Application state cannot be mutated, only transitioned
+
+### Design System Architecture
+
+The frozen UI system consists of three core modules:
+
+```python
+# src/features/ui/design_system.py
+from features.ui.design_system import (
+    COLORS,          # Frozen color palette
+    TYPOGRAPHY,      # Frozen typography tokens
+    SPACING,         # Frozen spacing tokens
+    BORDERS,         # Frozen border radius/width
+    LAYOUT,          # Frozen layout dimensions
+    ICONS,           # Frozen icon/emoji mappings
+    StyleSheetTemplates,  # Frozen CSS template generators
+)
+
+# src/features/ui/ui_config.py
+from features.ui.ui_config import (
+    CONFIG,          # Master frozen configuration
+    StatusType,      # Frozen status type enum
+    InteractionMode, # Frozen interaction mode enum
+)
+
+# src/features/ui/state_manager.py
+from features.ui.state_manager import (
+    StateManager,    # Thread-safe immutable state manager
+    ApplicationState,  # Frozen application state dataclass
+    OperationContext,  # Context manager for operations
+    get_state_manager,  # Global singleton accessor
+)
+```
+
+### Frozen Design Principles
+
+#### 1. Immutability
+All design tokens are frozen using `@dataclass(frozen=True)`:
+
+```python
+from features.ui.design_system import COLORS, TYPOGRAPHY
+
+# These CANNOT be modified at runtime
+COLORS.GRADIENT_START = "#000000"  # Raises FrozenInstanceError
+TYPOGRAPHY.FONT_FAMILY = "Arial"   # Raises FrozenInstanceError
+```
+
+#### 2. Single Source of Truth
+All UI styling derives from design tokens:
+
+```python
+# ✅ CORRECT: Use design tokens
+from features.ui.design_system import COLORS, SPACING
+widget.setStyleSheet(f"""
+    QWidget {{
+        background-color: {COLORS.BACKGROUND_CARD};
+        padding: {SPACING.MD}px;
+    }}
+""")
+
+# ❌ WRONG: Hard-coded values
+widget.setStyleSheet("""
+    QWidget {
+        background-color: #FFFFFF;
+        padding: 16px;
+    }
+""")
+```
+
+#### 3. State Immutability
+Application state is immutable - changes create new instances:
+
+```python
+from features.ui.state_manager import ApplicationState, UIState
+
+# Create state
+state = ApplicationState(
+    ui_state=UIState.IDLE,
+    mode=InteractionMode.NORMAL,
+    status_message="Ready",
+    status_type=StatusType.SUCCESS,
+)
+
+# Update creates NEW state (original unchanged)
+new_state = state.with_status("Processing")
+assert state.status_message == "Ready"  # Original unchanged
+assert new_state.status_message == "Processing"  # New state updated
+```
+
+#### 4. Component Standardization
+All components must use frozen design tokens:
+
+```python
+from features.ui.design_system import COLORS, TYPOGRAPHY, SPACING
+from features.ui.components import ModernCard
+
+# Components automatically use frozen tokens
+card = ModernCard(
+    title="Feature",
+    description="Description",
+    icon_text="🔧",
+    color=COLORS.AVAST_ORANGE  # From frozen palette
+)
+```
+
+### UI/UX Modification Rules
+
+#### FORBIDDEN Changes (Without Architectural Review)
+
+- ❌ Modifying color values in `design_system.py`
+- ❌ Changing spacing, typography, or border tokens
+- ❌ Altering component dimensions or layout
+- ❌ Adding new visual styles without design system alignment
+- ❌ Bypassing design tokens with hard-coded values
+
+#### ALLOWED Changes
+
+- ✅ Adding new features using existing design patterns
+- ✅ Adding new colors to `ColorPalette` (if following naming conventions)
+- ✅ Creating new components using frozen tokens
+- ✅ Modifying business logic (not UI presentation)
+- ✅ Adding new icons to `IconTokens`
+
+### Testing Requirements
+
+All UI changes must pass frozen UI tests:
+
+```bash
+# Run frozen UI tests
+uv run pytest src/features/ui/tests/test_frozen_ui.py -v
+
+# Test design system validation
+uv run pytest src/features/ui/tests/test_frozen_ui.py::TestDesignSystemValidation -v
+
+# Test state management
+uv run pytest src/features/ui/tests/test_frozen_ui.py::TestStateManager -v
+```
+
+### Design System Reference
+
+#### Color Palette
+```python
+# Primary gradient
+COLORS.GRADIENT_START  # "#667EEA"
+COLORS.GRADIENT_END    # "#764BA2"
+
+# Status colors
+COLORS.STATUS_SUCCESS  # "#4CAF50"
+COLORS.STATUS_WARNING  # "#FF9800"
+COLORS.STATUS_ERROR    # "#F44336"
+
+# Feature accents
+COLORS.AVAST_ORANGE    # "#FF6600"
+COLORS.OFFICE_GREEN    # "#217346"
+```
+
+#### Typography
+```python
+TYPOGRAPHY.FONT_FAMILY           # "Segoe UI"
+TYPOGRAPHY.SIZE_HEADER_TITLE      # 24
+TYPOGRAPHY.SIZE_SECTION_HEADER    # 14
+TYPOGRAPHY.SIZE_CARD_TITLE        # 13
+```
+
+#### Spacing
+```python
+SPACING.UNIT   # 4 (base unit)
+SPACING.XS     # 4
+SPACING.SM     # 8
+SPACING.MD     # 16
+SPACING.LG     # 20
+SPACING.XL     # 30
+```
+
+#### Borders
+```python
+BORDERS.RADIUS_CARD  # 12
+BORDERS.RADIUS_STATUS  # 10
+BORDERS.WIDTH_DEFAULT  # 1
+```
+
+### Adding New Features
+
+When adding new features, follow the frozen UI pattern:
+
+```python
+# 1. Add feature config to ui_config.py
+NEW_FEATURE: Final[FeatureCardConfig] = FeatureCardConfig(
+    title="New Feature",
+    description="Feature description",
+    icon="⚡",
+    accent_color="#FF5722",  # Must be valid hex
+    category="converter",
+    keyboard_shortcut="Ctrl+Shift+N"
+)
+
+# 2. Use frozen design tokens in component
+from features.ui.design_system import COLORS, SPACING
+from features.ui.components import ModernCard
+
+card = ModernCard(
+    title=CONFIG.features.NEW_FEATURE.title,
+    description=CONFIG.features.NEW_FEATURE.description,
+    icon=CONFIG.features.NEW_FEATURE.icon,
+    color=CONFIG.features.NEW_FEATURE.accent_color
+)
+```
+
+### State Management Best Practices
+
+```python
+from features.ui.state_manager import (
+    get_state_manager,
+    OperationContext,
+    OperationType,
+)
+
+# Get global state manager
+state_manager = get_state_manager()
+
+# Use context manager for operations
+with OperationContext(OperationType.CONVERT_OFFICE, "Converting files..."):
+    # Do conversion work
+    # State automatically managed (busy → idle)
+    pass
+
+# Or manual state management
+state_manager.start_operation(OperationType.DOWNLOAD)
+state_manager.update_status("Downloading...", success=True)
+state_manager.end_operation()
+```
+
+### Validation
+
+The frozen UI system includes automatic validation:
+
+```python
+# Design system validation (runs on import)
+from features.ui.design_system import validate_design_system
+assert validate_design_system()  # Raises if invalid
+
+# Configuration validation (runs on import)
+from features.ui.ui_config import validate_config
+assert validate_config()  # Raises if invalid
+
+# State integrity validation (runs on import)
+from features.ui.state_manager import validate_state_integrity
+assert validate_state_integrity()  # Raises if invalid
+```
+
 ## 🧱 Code Structure & Modularity
 
 ### File and Function Limits
