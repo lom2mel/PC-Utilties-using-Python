@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: Security",
     "Topic :: Utilities",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
     "annotated-types>=0.7.0",
     "certifi>=2025.8.3",
@@ -47,7 +47,6 @@ dependencies = [
     "iniconfig>=2.3.0",
     "kiwisolver>=1.4.9",
     "matplotlib>=3.10.6",
-    "mysql-connector-python>=9.3.0",
     "numpy>=2.3.2",
     "packaging>=25.0",
     "pandas>=2.3.2",
@@ -123,7 +122,7 @@ include = ["src*"]
 
 # Ruff configuration for linting and formatting
 [tool.ruff]
-target-version = "py38"
+target-version = "py311"
 line-length = 100
 exclude = [
     ".git",
@@ -173,7 +172,7 @@ line-ending = "auto"
 
 # MyPy configuration for type checking
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

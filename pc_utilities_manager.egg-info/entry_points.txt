@@ -1,0 +1,3 @@
+[console_scripts]
+mysql-import-helper = src.mysql_import_helper.mysql_import_helper:main
+pc-utilities = src.main:main
