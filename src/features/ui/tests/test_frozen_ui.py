@@ -5,6 +5,7 @@ This test suite validates:
 - UI configuration integrity
 - State management consistency
 - Component adherence to frozen tokens
+- Tab widget functionality
 
 Run with: uv run pytest src/features/ui/tests/test_frozen_ui.py -v
 """
@@ -19,6 +20,7 @@ from features.ui.design_system import (
     BORDERS,
     LAYOUT,
     ICONS,
+    TABS,
     StyleSheetTemplates,
     validate_design_system,
 )
@@ -27,6 +29,7 @@ from features.ui.ui_config import (
     StatusType,
     InteractionMode,
     FeatureCardConfig,
+    TabConfig,
     validate_config,
 )
 from features.ui.state_manager import (
@@ -89,6 +92,11 @@ class TestDesignSystemImmutability:
         with pytest.raises(FrozenInstanceError):
             ICONS.SUCCESS = "OK"
 
+    def test_tabs_is_frozen(self):
+        """Test that tab tokens are frozen."""
+        with pytest.raises(FrozenInstanceError):
+            TABS.TAB_BAR_HEIGHT = 60
+
 
 class TestDesignSystemValidation:
     """Test design system validation."""
@@ -140,6 +148,30 @@ class TestStyleSheetTemplates:
         css_warning = StyleSheetTemplates.status_widget(False)
         assert COLORS.STATUS_SUCCESS in css_success
         assert COLORS.STATUS_WARNING in css_warning
+
+    def test_tab_container_template(self):
+        """Test tab container stylesheet."""
+        css = StyleSheetTemplates.tab_container()
+        assert 'background-color' in css
+        assert TABS.TAB_CONTAINER_BACKGROUND in css
+
+    def test_tab_button_template_active(self):
+        """Test active tab button stylesheet."""
+        css = StyleSheetTemplates.tab_button(is_active=True)
+        assert TABS.TAB_INDICATOR_COLOR in css
+        assert TABS.TAB_TEXT_ACTIVE in css
+
+    def test_tab_button_template_inactive(self):
+        """Test inactive tab button stylesheet."""
+        css = StyleSheetTemplates.tab_button(is_active=False)
+        assert TABS.TAB_TEXT_INACTIVE in css
+        assert 'hover' in css
+
+    def test_tab_content_area_template(self):
+        """Test tab content area stylesheet."""
+        css = StyleSheetTemplates.tab_content_area()
+        assert 'background-color' in css
+        assert 'transparent' in css
 
 
 # =============================================================================
@@ -209,6 +241,127 @@ class TestFeatureCardConfig:
         office = CONFIG.features.OFFICE_CONVERTER
         assert office.category == "converter"
         assert office.keyboard_shortcut == "Ctrl+O"
+
+
+class TestTabConfiguration:
+    """Test tab configuration."""
+
+    def test_tab_config_exists(self):
+        """Test that tab configuration is available."""
+        assert hasattr(CONFIG, 'tabs')
+        assert CONFIG.tabs is not None
+
+    def test_security_tab_config(self):
+        """Test security tab configuration."""
+        security = CONFIG.tabs.SECURITY
+        assert isinstance(security, TabConfig)
+        assert security.id == "security"
+        assert security.title == "Security"
+        assert security.icon == ICONS.TAB_SECURITY
+        assert security.category == "security"
+
+    def test_converters_tab_config(self):
+        """Test converters tab configuration."""
+        converters = CONFIG.tabs.CONVERTERS
+        assert isinstance(converters, TabConfig)
+        assert converters.id == "converters"
+        assert converters.title == "Files"
+        assert converters.icon == ICONS.TAB_CONVERTERS
+        assert converters.category == "converter"
+
+    def test_tab_config_immutability(self):
+        """Test that tab configs are immutable."""
+        security = CONFIG.tabs.SECURITY
+        with pytest.raises(FrozenInstanceError):
+            security.title = "New Title"
+
+    def test_get_all_tabs(self):
+        """Test retrieving all tabs."""
+        tabs = CONFIG.tabs.get_all_tabs()
+        assert isinstance(tabs, list)
+        assert len(tabs) == 2
+        assert tabs[0]['id'] == 'security'
+        assert tabs[1]['id'] == 'converters'
+
+    def test_get_tab_by_category(self):
+        """Test retrieving tab by category."""
+        security_tab = CONFIG.tabs.get_tab_by_category("security")
+        assert security_tab is not None
+        assert security_tab.id == "security"
+
+        converter_tab = CONFIG.tabs.get_tab_by_category("converter")
+        assert converter_tab is not None
+        assert converter_tab.id == "converters"
+
+    def test_get_tab_by_invalid_category(self):
+        """Test retrieving tab with invalid category."""
+        invalid_tab = CONFIG.tabs.get_tab_by_category("invalid")
+        assert invalid_tab is None
+
+
+# =============================================================================
+# TAB STATE MANAGEMENT TESTS
+# =============================================================================
+
+class TestTabStateManagement:
+    """Test tab state management."""
+
+    def test_default_active_tab(self):
+        """Test that default active tab is security."""
+        state = ApplicationState(
+            ui_state=UIState.IDLE,
+            mode=InteractionMode.NORMAL,
+            status_message="Test",
+            status_type=StatusType.SUCCESS,
+        )
+        assert state.active_tab_id == "security"
+
+    def test_with_tab_creates_new_state(self):
+        """Test that with_tab creates new state."""
+        state = ApplicationState(
+            ui_state=UIState.IDLE,
+            mode=InteractionMode.NORMAL,
+            status_message="Test",
+            status_type=StatusType.SUCCESS,
+        )
+
+        new_state = state.with_tab("converters")
+
+        assert new_state.active_tab_id == "converters"
+        # Original state unchanged
+        assert state.active_tab_id == "security"
+
+    def test_with_tab_validates_tab_id(self):
+        """Test that with_tab validates tab ID."""
+        state = ApplicationState(
+            ui_state=UIState.IDLE,
+            mode=InteractionMode.NORMAL,
+            status_message="Test",
+            status_type=StatusType.SUCCESS,
+        )
+
+        # Invalid tab ID should raise ValueError
+        with pytest.raises(ValueError):
+            state.with_tab("invalid_tab")
+
+    def test_state_manager_switch_tab(self):
+        """Test StateManager switch_tab method."""
+        manager = StateManager()
+
+        # Default tab should be security
+        assert manager.get_active_tab_id() == "security"
+
+        # Switch to converters
+        manager.switch_tab("converters")
+        assert manager.get_active_tab_id() == "converters"
+
+    def test_state_manager_switch_invalid_tab(self):
+        """Test StateManager switch_tab with invalid tab."""
+        manager = StateManager()
+
+        # Invalid tab should raise ValueError
+        with pytest.raises(ValueError):
+            manager.switch_tab("invalid_tab")
 
 
 # =============================================================================

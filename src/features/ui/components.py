@@ -7,8 +7,17 @@ IMPORTANT: These components are part of the frozen UI/UX v2.0 standard.
 Modifications must maintain design system integrity.
 """
 
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QFrame
-from PySide6.QtCore import Qt
+from typing import Callable, Optional
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QFrame,
+    QPushButton,
+    QHBoxLayout,
+    QStackedWidget,
+)
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
 from features.ui.design_system import (
@@ -17,6 +26,7 @@ from features.ui.design_system import (
     SPACING,
     BORDERS,
     ICONS,
+    TABS,
     StyleSheetTemplates,
 )
 
@@ -221,3 +231,191 @@ class StatusIndicator(QWidget):
         self.icon_label.setText(icon)
         self.icon_label.setStyleSheet(f"color: {color}; background: transparent;")
         self.message_label.setText(message)
+
+
+class ModernTabBar(QWidget):
+    """Modern tab bar widget with frozen design tokens.
+
+    A horizontal tab bar that displays tabs with icons and labels.
+    Uses frozen design tokens for consistent styling.
+
+    Attributes:
+        tabs: List of tab configuration dictionaries
+        active_tab_id: ID of the currently active tab
+    """
+
+    tab_changed = Signal(str)  # Signal emitted when tab changes
+
+    def __init__(self, tabs: list[dict], active_tab_id: str = "security"):
+        """Initialize a ModernTabBar widget.
+
+        Args:
+            tabs: List of tab dictionaries with keys: id, title, icon
+            active_tab_id: ID of the initially active tab
+
+        Note:
+            All styling uses frozen design tokens from the design system.
+        """
+        super().__init__()
+        self.tabs = tabs
+        self.active_tab_id = active_tab_id
+        self.tab_buttons: dict[str, QPushButton] = {}
+        self.setup_ui()
+
+    def setup_ui(self) -> None:
+        """Setup tab bar UI with frozen design tokens."""
+        self.setStyleSheet(StyleSheetTemplates.tab_container())
+        self.setFixedHeight(TABS.TAB_BAR_HEIGHT + SPACING.SM)
+
+        layout = QHBoxLayout()
+        layout.setContentsMargins(SPACING.MD, SPACING.SM, SPACING.MD, 0)
+        layout.setSpacing(TABS.TAB_SPACING)
+
+        # Create tab button for each tab
+        for tab in self.tabs:
+            tab_button = QPushButton(f"{tab['icon']} {tab['title']}")
+            tab_id = tab['id']
+            is_active = (tab_id == self.active_tab_id)
+
+            tab_button.setStyleSheet(StyleSheetTemplates.tab_button(is_active))
+            tab_button.setCursor(Qt.PointingHandCursor)
+            tab_button.clicked.connect(lambda checked, tid=tab_id: self._on_tab_clicked(tid))
+
+            self.tab_buttons[tab_id] = tab_button
+            layout.addWidget(tab_button)
+
+        layout.addStretch()
+        self.setLayout(layout)
+
+    def _on_tab_clicked(self, tab_id: str) -> None:
+        """Handle tab button click.
+
+        Args:
+            tab_id: ID of the clicked tab
+        """
+        if tab_id != self.active_tab_id:
+            self.set_active_tab(tab_id)
+            self.tab_changed.emit(tab_id)
+
+    def set_active_tab(self, tab_id: str) -> None:
+        """Set the active tab and update styling.
+
+        Args:
+            tab_id: ID of the tab to set as active
+
+        Raises:
+            ValueError: If tab_id is not found in tabs
+        """
+        if tab_id not in self.tab_buttons:
+            raise ValueError(f"Unknown tab ID: {tab_id}")
+
+        # Update old active tab button
+        old_button = self.tab_buttons[self.active_tab_id]
+        old_button.setStyleSheet(StyleSheetTemplates.tab_button(False))
+
+        # Update new active tab button
+        self.active_tab_id = tab_id
+        new_button = self.tab_buttons[tab_id]
+        new_button.setStyleSheet(StyleSheetTemplates.tab_button(True))
+
+
+class ModernTabWidget(QWidget):
+    """Modern tab widget with frozen design tokens.
+
+    A complete tab widget with tab bar and content area.
+    Manages switching between tab content using a stacked widget.
+
+    Attributes:
+        tabs: List of tab configuration dictionaries
+        active_tab_id: ID of the currently active tab
+        tab_contents: Dictionary mapping tab IDs to content widgets
+    """
+
+    tab_changed = Signal(str)  # Signal emitted when tab changes
+
+    def __init__(self, tabs: list[dict], active_tab_id: str = "security"):
+        """Initialize a ModernTabWidget widget.
+
+        Args:
+            tabs: List of tab dictionaries with keys: id, title, icon
+            active_tab_id: ID of the initially active tab
+
+        Note:
+            All styling uses frozen design tokens from the design system.
+        """
+        super().__init__()
+        self.tabs = tabs
+        self.active_tab_id = active_tab_id
+        self.tab_contents: dict[str, QWidget] = {}
+        self.setup_ui()
+
+    def setup_ui(self) -> None:
+        """Setup tab widget UI with frozen design tokens."""
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        # Create tab bar
+        self.tab_bar = ModernTabBar(self.tabs, self.active_tab_id)
+        self.tab_bar.tab_changed.connect(self._on_tab_changed)
+        layout.addWidget(self.tab_bar)
+
+        # Create stacked widget for content
+        self.stacked_widget = QStackedWidget()
+        self.stacked_widget.setStyleSheet(StyleSheetTemplates.tab_content_area())
+        layout.addWidget(self.stacked_widget)
+
+        self.setLayout(layout)
+
+    def _on_tab_changed(self, tab_id: str) -> None:
+        """Handle tab change from tab bar.
+
+        Args:
+            tab_id: ID of the newly active tab
+        """
+        self.active_tab_id = tab_id
+
+        # Switch content widget
+        if tab_id in self.tab_contents:
+            self.stacked_widget.setCurrentWidget(self.tab_contents[tab_id])
+
+        self.tab_changed.emit(tab_id)
+
+    def add_tab_content(self, tab_id: str, content: QWidget) -> None:
+        """Add content widget for a tab.
+
+        Args:
+            tab_id: ID of the tab
+            content: Widget to display as tab content
+
+        Raises:
+            ValueError: If tab_id is not found in tabs
+        """
+        if tab_id not in [t['id'] for t in self.tabs]:
+            raise ValueError(f"Unknown tab ID: {tab_id}")
+
+        # Add to stacked widget if not already added
+        if tab_id not in self.tab_contents:
+            self.tab_contents[tab_id] = content
+            self.stacked_widget.addWidget(content)
+
+            # Set as current if this is the active tab
+            if tab_id == self.active_tab_id:
+                self.stacked_widget.setCurrentWidget(content)
+
+    def get_active_tab_id(self) -> str:
+        """Get the ID of the currently active tab.
+
+        Returns:
+            Active tab ID
+        """
+        return self.active_tab_id
+
+    def set_active_tab(self, tab_id: str) -> None:
+        """Set the active tab programmatically.
+
+        Args:
+            tab_id: ID of the tab to set as active
+        """
+        self.tab_bar.set_active_tab(tab_id)
+

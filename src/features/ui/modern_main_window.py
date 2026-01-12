@@ -1,7 +1,8 @@
 """Modern redesigned UI for PC Utilities Manager with professional UX.
 
 This module provides the main application window with a modern card-based interface
-for accessing PC utilities and file converters.
+for accessing PC utilities and file converters. Now with tab-based navigation
+for better UX and organization.
 """
 
 from PySide6.QtWidgets import (
@@ -19,15 +20,18 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QAction, QKeySequence
 
-from features.ui.components import ModernCard, SectionHeader
+from features.ui.components import ModernCard, SectionHeader, ModernTabWidget
 from features.ui.download_handlers import DownloadHandlers
 from features.ui.converter_handlers import ConverterHandlers
+from features.ui.ui_config import CONFIG
+from features.ui.state_manager import get_state_manager
 
 
 class ModernDownloadManager(QMainWindow):
     """Modern redesigned PC Utilities Manager with professional UI/UX.
 
     Features:
+    - Tab-based navigation for better organization
     - Card-based interface with hover effects
     - Security tools for downloading antivirus and scanners
     - File converters for Office documents and images
@@ -37,11 +41,14 @@ class ModernDownloadManager(QMainWindow):
     Attributes:
         download_handlers: Handler for download operations
         converter_handlers: Handler for file conversion operations
+        tab_widget: Tab widget for navigation
+        state_manager: State manager for tracking application state
     """
 
     def __init__(self):
         """Initialize the modern download manager window."""
         super().__init__()
+        self.state_manager = get_state_manager()
         self.init_ui()
 
         # Initialize handlers
@@ -53,7 +60,7 @@ class ModernDownloadManager(QMainWindow):
         self.converter_handlers.status_changed.connect(self.update_status)
 
     def init_ui(self) -> None:
-        """Initialize modern UI with card-based layout."""
+        """Initialize modern UI with tab-based card layout."""
         self.setWindowTitle("PC Utilities Manager")
         self.setMinimumSize(900, 700)
         self.setStyleSheet("""
@@ -88,19 +95,27 @@ class ModernDownloadManager(QMainWindow):
         content_widget = QWidget()
         content_layout = QVBoxLayout()
         content_layout.setContentsMargins(30, 30, 30, 30)
-        content_layout.setSpacing(30)
+        content_layout.setSpacing(20)
 
         # Status indicator
         self.status_indicator = self.create_status_indicator()
         content_layout.addWidget(self.status_indicator)
 
-        # Security Tools Section
-        security_section = self.create_security_section()
-        content_layout.addWidget(security_section)
+        # Create tab widget with frozen configuration
+        tabs = CONFIG.tabs.get_all_tabs()
+        self.tab_widget = ModernTabWidget(
+            tabs=tabs,
+            active_tab_id=self.state_manager.get_active_tab_id()
+        )
+        self.tab_widget.tab_changed.connect(self._on_tab_changed)
+        content_layout.addWidget(self.tab_widget)
 
-        # File Converters Section
-        converters_section = self.create_converters_section()
-        content_layout.addWidget(converters_section)
+        # Create and add tab content
+        security_content = self.create_security_tab_content()
+        converters_content = self.create_converters_tab_content()
+
+        self.tab_widget.add_tab_content("security", security_content)
+        self.tab_widget.add_tab_content("converters", converters_content)
 
         content_layout.addStretch()
 
@@ -109,6 +124,14 @@ class ModernDownloadManager(QMainWindow):
         main_layout.addWidget(scroll_area)
 
         central_widget.setLayout(main_layout)
+
+    def _on_tab_changed(self, tab_id: str) -> None:
+        """Handle tab change event.
+
+        Args:
+            tab_id: ID of the newly active tab
+        """
+        self.state_manager.switch_tab(tab_id)
 
     def create_menu_bar(self) -> None:
         """Create menu bar with File and Help menus."""
@@ -264,16 +287,16 @@ class ModernDownloadManager(QMainWindow):
         status_widget.setLayout(layout)
         return status_widget
 
-    def create_security_section(self) -> QWidget:
-        """Create security tools section with cards.
+    def create_security_tab_content(self) -> QWidget:
+        """Create security tools tab content with cards.
 
         Returns:
-            Section widget with security tool cards
+            Widget with security tool cards for the security tab
         """
         from PySide6.QtWidgets import QWidget
 
-        section = QWidget()
-        section.setStyleSheet("background: transparent;")
+        content = QWidget()
+        content.setStyleSheet("background: transparent;")
         layout = QVBoxLayout()
         layout.setSpacing(20)
 
@@ -329,19 +352,20 @@ class ModernDownloadManager(QMainWindow):
         cards_layout.addWidget(speccy_card, 1, 0)
 
         layout.addLayout(cards_layout)
-        section.setLayout(layout)
-        return section
+        layout.addStretch()
+        content.setLayout(layout)
+        return content
 
-    def create_converters_section(self) -> QWidget:
-        """Create file converters section with cards.
+    def create_converters_tab_content(self) -> QWidget:
+        """Create file converters tab content with cards.
 
         Returns:
-            Section widget with file converter cards
+            Widget with file converter cards for the converters tab
         """
         from PySide6.QtWidgets import QWidget
 
-        section = QWidget()
-        section.setStyleSheet("background: transparent;")
+        content = QWidget()
+        content.setStyleSheet("background: transparent;")
         layout = QVBoxLayout()
         layout.setSpacing(20)
 
@@ -411,8 +435,9 @@ class ModernDownloadManager(QMainWindow):
         cards_layout.addWidget(placeholder_card, 0, 2)
 
         layout.addLayout(cards_layout)
-        section.setLayout(layout)
-        return section
+        layout.addStretch()
+        content.setLayout(layout)
+        return content
 
     def update_status(self, message: str, success: bool = True) -> None:
         """Update status indicator with message.

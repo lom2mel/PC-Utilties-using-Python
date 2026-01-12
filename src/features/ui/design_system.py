@@ -197,6 +197,50 @@ LAYOUT = LayoutTokens()
 
 
 # =============================================================================
+# TAB WIDGET - FROZEN v2.0
+# =============================================================================
+
+@dataclass(frozen=True)
+class TabTokens:
+    """Frozen tab widget design tokens.
+
+    Defines tab bar dimensions, spacing, and styling constants.
+    All values follow the frozen UI/UX v2.0 standard.
+    """
+
+    # Tab bar dimensions
+    TAB_BAR_HEIGHT: Final[int] = 50
+    TAB_SPACING: Final[int] = 8
+    TAB_PADDING_HORZ: Final[int] = 24
+    TAB_PADDING_VERT: Final[int] = 12
+
+    # Tab styling (using existing border tokens)
+    TAB_RADIUS: Final[int] = 8  # Same as BORDERS.RADIUS_BUTTON
+    TAB_BORDER_WIDTH: Final[int] = 2
+
+    # Tab indicator (bottom border for active tab)
+    TAB_INDICATOR_HEIGHT: Final[int] = 3
+    TAB_INDICATOR_COLOR: Final[str] = "#667EEA"  # Same as GRADIENT_START
+
+    # Tab colors (using existing color tokens)
+    TAB_BACKGROUND_ACTIVE: Final[str] = "transparent"
+    TAB_BACKGROUND_INACTIVE: Final[str] = "transparent"
+    TAB_BACKGROUND_HOVER: Final[str] = "rgba(255, 255, 255, 0.5)"
+
+    TAB_TEXT_ACTIVE: Final[str] = "#1F1F1F"  # TEXT_PRIMARY
+    TAB_TEXT_INACTIVE: Final[str] = "#666666"  # TEXT_SECONDARY
+    TAB_TEXT_HOVER: Final[str] = "#1F1F1F"  # TEXT_PRIMARY
+
+    # Tab container
+    TAB_CONTAINER_BACKGROUND: Final[str] = "#FFFFFF"  # BACKGROUND_CARD
+    TAB_CONTAINER_BORDER: Final[str] = "#E0E0E0"  # BORDER_DEFAULT
+
+
+# Global tab instance
+TABS = TabTokens()
+
+
+# =============================================================================
 # ICONS AND EMOJI - FROZEN v2.0
 # =============================================================================
 
@@ -225,6 +269,10 @@ class IconTokens:
     SPECCY: Final[str] = "💻"
     OFFICE: Final[str] = "📄"
     PICTURE: Final[str] = "🖼️"
+
+    # Tab icons
+    TAB_SECURITY: Final[str] = "🔒"
+    TAB_CONVERTERS: Final[str] = "📁"
 
 
 # Global icon instance
@@ -352,6 +400,70 @@ class StyleSheetTemplates:
             }}
         """
 
+    @staticmethod
+    def tab_container() -> str:
+        """Tab container stylesheet."""
+        return f"""
+            QWidget {{
+                background-color: {TABS.TAB_CONTAINER_BACKGROUND};
+                border-bottom: {BORDERS.WIDTH_DEFAULT}px solid {TABS.TAB_CONTAINER_BORDER};
+            }}
+        """
+
+    @staticmethod
+    def tab_button(is_active: bool = False) -> str:
+        """Tab button stylesheet.
+
+        Args:
+            is_active: True for active tab styling, False for inactive
+
+        Returns:
+            CSS stylesheet string for tab button
+        """
+        if is_active:
+            return f"""
+                QPushButton {{
+                    background-color: {TABS.TAB_BACKGROUND_ACTIVE};
+                    color: {TABS.TAB_TEXT_ACTIVE};
+                    border: none;
+                    border-bottom: {TABS.TAB_INDICATOR_HEIGHT}px solid {TABS.TAB_INDICATOR_COLOR};
+                    padding: {TABS.TAB_PADDING_VERT}px {TABS.TAB_PADDING_HORZ}px;
+                    font-size: {TYPOGRAPHY.SIZE_SECTION_HEADER}px;
+                    font-weight: {TYPOGRAPHY.WEIGHT_BOLD};
+                    text-align: left;
+                }}
+                QPushButton:hover {{
+                    background-color: {TABS.TAB_BACKGROUND_ACTIVE};
+                    color: {TABS.TAB_TEXT_ACTIVE};
+                }}
+            """
+        else:
+            return f"""
+                QPushButton {{
+                    background-color: {TABS.TAB_BACKGROUND_INACTIVE};
+                    color: {TABS.TAB_TEXT_INACTIVE};
+                    border: none;
+                    padding: {TABS.TAB_PADDING_VERT}px {TABS.TAB_PADDING_HORZ}px;
+                    font-size: {TYPOGRAPHY.SIZE_SECTION_HEADER}px;
+                    font-weight: {TYPOGRAPHY.WEIGHT_NORMAL};
+                    text-align: left;
+                }}
+                QPushButton:hover {{
+                    background-color: {TABS.TAB_BACKGROUND_HOVER};
+                    color: {TABS.TAB_TEXT_HOVER};
+                }}
+            """
+
+    @staticmethod
+    def tab_content_area() -> str:
+        """Tab content area stylesheet."""
+        return f"""
+            QWidget {{
+                background-color: transparent;
+                border: none;
+            }}
+        """
+
 
 # =============================================================================
 # VALIDATION - Design System Integrity
@@ -379,6 +491,10 @@ def validate_design_system() -> bool:
     # Verify font sizes are positive (only check SIZE attributes)
     typo_attrs = [attr for attr in dir(TYPOGRAPHY) if not attr.startswith('_') and attr.startswith('SIZE')]
     assert all(getattr(TYPOGRAPHY, attr) > 0 for attr in typo_attrs)
+
+    # Verify tab dimensions are positive
+    tab_attrs = [attr for attr in dir(TABS) if not attr.startswith('_') and attr.isupper()]
+    assert all(getattr(TABS, attr) > 0 for attr in tab_attrs if isinstance(getattr(TABS, attr), (int, float)))
 
     return True
 

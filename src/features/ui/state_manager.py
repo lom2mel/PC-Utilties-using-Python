@@ -63,6 +63,7 @@ class ApplicationState:
         status_type: Current status type
         timestamp: When this state was created
         active_operation: Currently running operation (if any)
+        active_tab_id: ID of the currently active tab
     """
 
     ui_state: UIState
@@ -72,6 +73,7 @@ class ApplicationState:
     timestamp: datetime = field(default_factory=datetime.now)
     active_operation: Optional[OperationType] = None
     operation_progress: float = 0.0
+    active_tab_id: str = "security"
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def with_status(
@@ -96,7 +98,36 @@ class ApplicationState:
             timestamp=datetime.now(),
             active_operation=self.active_operation,
             operation_progress=self.operation_progress,
+            active_tab_id=self.active_tab_id,
             metadata=dict(self.metadata),  # Create a copy
+        )
+
+    def with_tab(self, tab_id: str) -> "ApplicationState":
+        """Create a new state with updated active tab.
+
+        Args:
+            tab_id: ID of the tab to switch to
+
+        Returns:
+            New ApplicationState instance with updated tab
+
+        Raises:
+            ValueError: If tab_id is not valid
+        """
+        valid_tabs = ["security", "converters"]
+        if tab_id not in valid_tabs:
+            raise ValueError(f"Invalid tab ID: {tab_id}. Must be one of {valid_tabs}")
+
+        return ApplicationState(
+            ui_state=self.ui_state,
+            mode=self.mode,
+            status_message=self.status_message,
+            status_type=self.status_type,
+            timestamp=datetime.now(),
+            active_operation=self.active_operation,
+            operation_progress=self.operation_progress,
+            active_tab_id=tab_id,
+            metadata=dict(self.metadata),
         )
 
     def with_ui_state(self, ui_state: UIState) -> "ApplicationState":
@@ -116,6 +147,7 @@ class ApplicationState:
             timestamp=datetime.now(),
             active_operation=self.active_operation,
             operation_progress=self.operation_progress,
+            active_tab_id=self.active_tab_id,
             metadata=dict(self.metadata),
         )
 
@@ -149,6 +181,7 @@ class ApplicationState:
             timestamp=datetime.now(),
             active_operation=self.active_operation,
             operation_progress=self.operation_progress,
+            active_tab_id=self.active_tab_id,
             metadata=dict(self.metadata),
         )
 
@@ -180,6 +213,7 @@ class ApplicationState:
             timestamp=datetime.now(),
             active_operation=operation,
             operation_progress=progress,
+            active_tab_id=self.active_tab_id,
             metadata=dict(self.metadata),
         )
 
@@ -282,6 +316,27 @@ class StateManager:
         current = self.get_state()
         new_state = current.with_operation(None, progress=0.0)
         self.set_state(new_state)
+
+    def switch_tab(self, tab_id: str) -> None:
+        """Switch to a different tab.
+
+        Args:
+            tab_id: ID of the tab to switch to
+
+        Raises:
+            ValueError: If tab_id is not valid
+        """
+        current = self.get_state()
+        new_state = current.with_tab(tab_id)
+        self.set_state(new_state)
+
+    def get_active_tab_id(self) -> str:
+        """Get the ID of the currently active tab.
+
+        Returns:
+            Active tab ID
+        """
+        return self.get_state().active_tab_id
 
     def get_history(self) -> list[ApplicationState]:
         """Get state history (thread-safe).

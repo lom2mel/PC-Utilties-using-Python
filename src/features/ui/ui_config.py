@@ -11,7 +11,9 @@ The configuration follows the freeze UI/UX principle:
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Final, Dict, Any
+from typing import Final, Dict, Any, Optional
+
+from features.ui.design_system import ICONS
 
 
 # =============================================================================
@@ -100,6 +102,73 @@ class HeaderConfig:
     )
     show_about_button: Final[bool] = True
     about_button_text: Final[str] = "About"
+
+
+# =============================================================================
+# TAB CONFIGURATION (FROZEN)
+# =============================================================================
+
+@dataclass(frozen=True)
+class TabConfig:
+    """Frozen configuration for a single tab.
+
+    Each tab has immutable metadata and display settings.
+    Tabs organize features by category for better UX.
+    """
+
+    id: str
+    title: str
+    icon: str
+    category: str  # Maps to FeatureCardConfig.category
+
+
+@dataclass(frozen=True)
+class TabRegistry:
+    """Frozen registry of all application tabs.
+
+    This defines the tab structure for organizing features.
+    Tabs separate Security & Maintenance tools from File Converters.
+    """
+
+    SECURITY: Final[TabConfig] = TabConfig(
+        id="security",
+        title="Security",
+        icon=ICONS.TAB_SECURITY,
+        category="security"
+    )
+
+    CONVERTERS: Final[TabConfig] = TabConfig(
+        id="converters",
+        title="Files",
+        icon=ICONS.TAB_CONVERTERS,
+        category="converter"
+    )
+
+    def get_all_tabs(self) -> list[TabConfig]:
+        """Get all tab configurations as dictionaries.
+
+        Returns:
+            List of tab dictionaries for use with ModernTabWidget
+        """
+        return [
+            {"id": self.SECURITY.id, "title": self.SECURITY.title, "icon": self.SECURITY.icon},
+            {"id": self.CONVERTERS.id, "title": self.CONVERTERS.title, "icon": self.CONVERTERS.icon},
+        ]
+
+    def get_tab_by_category(self, category: str) -> Optional[TabConfig]:
+        """Get tab configuration by category.
+
+        Args:
+            category: Feature category (e.g., "security", "converter")
+
+        Returns:
+            TabConfig for the category, or None if not found
+        """
+        tabs = [self.SECURITY, self.CONVERTERS]
+        for tab in tabs:
+            if tab.category == category:
+                return tab
+        return None
 
 
 # =============================================================================
@@ -289,6 +358,7 @@ class UIConfig:
     status: Final[StatusConfig] = field(default_factory=StatusConfig)
     header: Final[HeaderConfig] = field(default_factory=HeaderConfig)
     features: Final[FeatureRegistry] = field(default_factory=FeatureRegistry)
+    tabs: Final[TabRegistry] = field(default_factory=TabRegistry)
     menu: Final[MenuConfig] = field(default_factory=MenuConfig)
     about: Final[AboutDialogConfig] = field(default_factory=AboutDialogConfig)
     state_constants: Final[UIStateConstants] = field(default_factory=UIStateConstants)
