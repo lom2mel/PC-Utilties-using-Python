@@ -218,6 +218,15 @@ class FeatureRegistry:
         category="security"
     )
 
+    BITDEFENDER: Final[FeatureCardConfig] = FeatureCardConfig(
+        title="Bitdefender Antivirus",
+        description="Download free antivirus protection for your PC",
+        icon="🦠",
+        accent_color="#ED1C24",
+        category="security",
+        keyboard_shortcut="Ctrl+Shift+B"
+    )
+
     # File converters
     OFFICE_CONVERTER: Final[FeatureCardConfig] = FeatureCardConfig(
         title="Office File Converter",
@@ -426,6 +435,7 @@ def validate_config() -> bool:
 
     # Verify feature configs
     assert isinstance(CONFIG.features.AVAST, FeatureCardConfig)
+    assert isinstance(CONFIG.features.BITDEFENDER, FeatureCardConfig)
     assert isinstance(CONFIG.features.OFFICE_CONVERTER, FeatureCardConfig)
 
     return True

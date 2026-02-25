@@ -29,6 +29,7 @@ class DownloadHandlers(QObject):
     VIRUSTOTAL_URL = "https://www.virustotal.com/gui/home/upload"
     CCLEANER_URL = "https://www.ccleaner.com/ccleaner/download/standard"
     SPECCY_URL = "https://www.ccleaner.com/speccy/download/standard"
+    BITDEFENDER_URL = "https://www.bitdefender.com/en-us/consumer/free-antivirus"
 
     def download_avast(self) -> None:
         """Open Avast Antivirus download page in browser.
@@ -87,6 +88,19 @@ class DownloadHandlers(QObject):
             )
             msg.setStandardButtons(QMessageBox.Ok)
             msg.exec()
+        except Exception as e:
+            self.status_changed.emit(f"Error: {str(e)}", False)
+
+    def download_bitdefender(self) -> None:
+        """Open Bitdefender Antivirus download page in browser.
+
+        Updates status and shows confirmation message when successful.
+        """
+        self.status_changed.emit("Opening Bitdefender download page...", True)
+        try:
+            webbrowser.open(self.BITDEFENDER_URL)
+            self.status_changed.emit("Bitdefender download page opened in browser", True)
+            self._show_download_message("Bitdefender Antivirus")
         except Exception as e:
             self.status_changed.emit(f"Error: {str(e)}", False)
 

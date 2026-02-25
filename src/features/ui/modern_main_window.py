@@ -351,6 +351,16 @@ class ModernDownloadManager(QMainWindow):
         speccy_card.mousePressEvent = lambda e: self.download_handlers.download_speccy()
         cards_layout.addWidget(speccy_card, 1, 0)
 
+        # Bitdefender card
+        bitdefender_card = ModernCard(
+            "Bitdefender Antivirus",
+            "Download free antivirus protection for your PC",
+            "🦠",
+            "#ED1C24"
+        )
+        bitdefender_card.mousePressEvent = lambda e: self.download_handlers.download_bitdefender()
+        cards_layout.addWidget(bitdefender_card, 1, 1)
+
         layout.addLayout(cards_layout)
         layout.addStretch()
         content.setLayout(layout)
