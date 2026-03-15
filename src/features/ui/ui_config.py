@@ -137,6 +137,13 @@ class TabRegistry:
         category="security"
     )
 
+    CYBER_SECURITY_NEWS: Final[TabConfig] = TabConfig(
+        id="cyber_security_news",
+        title="Cyber Security News",
+        icon=ICONS.TAB_CYBER_SECURITY_NEWS,
+        category="news"
+    )
+
     CONVERTERS: Final[TabConfig] = TabConfig(
         id="converters",
         title="Files",
@@ -152,6 +159,8 @@ class TabRegistry:
         """
         return [
             {"id": self.SECURITY.id, "title": self.SECURITY.title, "icon": self.SECURITY.icon},
+            {"id": self.CYBER_SECURITY_NEWS.id, "title": self.CYBER_SECURITY_NEWS.title,
+             "icon": self.CYBER_SECURITY_NEWS.icon},
             {"id": self.CONVERTERS.id, "title": self.CONVERTERS.title, "icon": self.CONVERTERS.icon},
         ]
 
@@ -159,12 +168,12 @@ class TabRegistry:
         """Get tab configuration by category.
 
         Args:
-            category: Feature category (e.g., "security", "converter")
+            category: Feature category (e.g., "security", "converter", "news")
 
         Returns:
             TabConfig for the category, or None if not found
         """
-        tabs = [self.SECURITY, self.CONVERTERS]
+        tabs = [self.SECURITY, self.CYBER_SECURITY_NEWS, self.CONVERTERS]
         for tab in tabs:
             if tab.category == category:
                 return tab

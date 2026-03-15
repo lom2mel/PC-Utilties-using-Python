@@ -7,6 +7,7 @@ IMPORTANT: These components are part of the frozen UI/UX v2.0 standard.
 Modifications must maintain design system integrity.
 """
 
+import webbrowser
 from typing import Callable, Optional
 from PySide6.QtWidgets import (
     QWidget,
@@ -418,4 +419,105 @@ class ModernTabWidget(QWidget):
             tab_id: ID of the tab to set as active
         """
         self.tab_bar.set_active_tab(tab_id)
+
+
+class NewsArticleCard(QFrame):
+    """Card widget for displaying news articles with frozen design tokens.
+
+    A compact card component that displays article title, source, date,
+    and description. Clicking opens the article in a web browser.
+
+    All styling uses the frozen design system.
+
+    Attributes:
+        article: NewsArticle dataclass containing article information
+    """
+
+    def __init__(self, article: "NewsArticle", parent: Optional[QWidget] = None):
+        """Initialize a NewsArticleCard widget.
+
+        Args:
+            article: NewsArticle object with title, url, source, date, description
+            parent: Optional parent widget
+
+        Note:
+            All styling uses frozen design tokens from the design system.
+        """
+        super().__init__(parent)
+        self.article = article
+        self.setFrameShape(QFrame.StyledPanel)
+        self.setCursor(Qt.PointingHandCursor)
+        self._setup_ui()
+
+    def _setup_ui(self) -> None:
+        """Setup card UI layout using frozen design tokens."""
+        # Apply frozen design styling
+        self.setStyleSheet(f"""
+            QFrame {{
+                background-color: {COLORS.BACKGROUND_CARD};
+                border: {BORDERS.WIDTH_DEFAULT}px solid {COLORS.BORDER_DEFAULT};
+                border-radius: {BORDERS.RADIUS_CARD}px;
+            }}
+            QFrame:hover {{
+                border: {BORDERS.WIDTH_ACTIVE}px solid {COLORS.GRADIENT_START};
+                background-color: {COLORS.BACKGROUND_CARD_HOVER};
+            }}
+        """)
+
+        layout = QVBoxLayout()
+        layout.setContentsMargins(SPACING.MD, SPACING.MD, SPACING.MD, SPACING.MD)
+        layout.setSpacing(SPACING.SM)
+
+        # Title with frozen typography
+        title = QLabel(self.article.title)
+        title.setFont(
+            QFont(TYPOGRAPHY.FONT_FAMILY, TYPOGRAPHY.SIZE_CARD_TITLE, QFont.Bold)
+        )
+        title.setStyleSheet(f"color: {COLORS.TEXT_PRIMARY};")
+        title.setWordWrap(True)
+        layout.addWidget(title)
+
+        # Source and date metadata
+        meta_text = self._format_meta()
+        meta = QLabel(meta_text)
+        meta.setFont(QFont(TYPOGRAPHY.FONT_FAMILY, TYPOGRAPHY.SIZE_BODY_SMALL))
+        meta.setStyleSheet(f"color: {COLORS.TEXT_SECONDARY};")
+        layout.addWidget(meta)
+
+        # Optional description
+        if self.article.description:
+            desc = QLabel(self.article.description[:150] + "...")
+            desc.setFont(QFont(TYPOGRAPHY.FONT_FAMILY, TYPOGRAPHY.SIZE_BODY_SMALL))
+            desc.setStyleSheet(f"color: {COLORS.TEXT_SECONDARY};")
+            desc.setWordWrap(True)
+            layout.addWidget(desc)
+
+        self.setLayout(layout)
+
+    def _format_meta(self) -> str:
+        """Format metadata line with source and date.
+
+        Returns:
+            Formatted metadata string
+        """
+        parts = [self.article.source]
+
+        if self.article.published_date:
+            # Format date as "MMM DD, YYYY"
+            date_str = self.article.published_date.strftime("%b %d, %Y")
+            parts.append(date_str)
+
+        return " • ".join(parts)
+
+    def mousePressEvent(self, event) -> None:
+        """Handle mouse click by opening article URL in browser.
+
+        Args:
+            event: Mouse press event
+        """
+        try:
+            webbrowser.open(self.article.url)
+        except Exception:
+            # Silently fail on browser open error
+            pass
 

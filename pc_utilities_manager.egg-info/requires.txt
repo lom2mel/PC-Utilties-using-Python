@@ -40,6 +40,7 @@ tzdata>=2025.2
 urllib3>=2.5.0
 xlsxwriter>=3.2.9
 structlog>=25.4.0
+feedparser>=6.0.11
 
 [build]
 PyInstaller>=6.0.0

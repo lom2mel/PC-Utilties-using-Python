@@ -16,7 +16,11 @@
       "Bash(uv remove:*)",
       "Bash($env:UV_LINK_MODE=\"copy\")",
       "Bash(cmd.exe:*)",
-      "Bash(call:*)"
+      "Bash(call:*)",
+      "Bash(uv venv:*)",
+      "Bash(uv pip:*)",
+      "Bash(uv run:*)",
+      "Bash(.venv/Scripts/python.exe src/main.py)"
     ],
     "deny": [],
     "ask": []

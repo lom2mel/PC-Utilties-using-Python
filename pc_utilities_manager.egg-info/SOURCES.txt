@@ -26,6 +26,7 @@ src/features/ui/converter_handlers.py
 src/features/ui/design_system.py
 src/features/ui/download_handlers.py
 src/features/ui/modern_main_window.py
+src/features/ui/news_feed_service.py
 src/features/ui/state_manager.py
 src/features/ui/ui_config.py
 src/features/ui/tests/test_frozen_ui.py

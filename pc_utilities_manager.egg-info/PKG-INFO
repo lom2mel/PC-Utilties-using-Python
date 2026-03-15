@@ -132,6 +132,7 @@ Requires-Dist: tzdata>=2025.2
 Requires-Dist: urllib3>=2.5.0
 Requires-Dist: xlsxwriter>=3.2.9
 Requires-Dist: structlog>=25.4.0
+Requires-Dist: feedparser>=6.0.11
 Provides-Extra: dev
 Requires-Dist: ruff>=0.14.3; extra == "dev"
 Requires-Dist: mypy>=1.0.0; extra == "dev"
