@@ -20,7 +20,14 @@
       "Bash(uv venv:*)",
       "Bash(uv pip:*)",
       "Bash(uv run:*)",
-      "Bash(.venv/Scripts/python.exe src/main.py)"
+      "Bash(.venv/Scripts/python.exe src/main.py)",
+      "Bash(.venv_clear/Scripts/python.exe -c \"import sys; print\\(sys.executable\\); import PySide6; print\\(''PySide6 version:'', PySide6.QtCore.__version__\\)\")",
+      "Bash(.venv/Scripts/python.exe -c \"import sys; print\\(sys.executable\\); import PySide6; print\\(''PySide6 version:'', PySide6.QtCore.__version__\\)\")",
+      "Bash(uv --version)",
+      "Bash(\".venv_clear/Scripts/python.exe\" -m pip --version)",
+      "Bash(\".venv_clear/Scripts/python.exe\" -m pip install -e .)",
+      "Bash(\".venv_clear/Scripts/python.exe\" -c \"from PySide6.QtWidgets import QApplication; print\\(''PySide6 imported successfully''\\)\")",
+      "Bash(\".venv_clear/Scripts/python.exe\" src/main.py)"
     ],
     "deny": [],
     "ask": []
