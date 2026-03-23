@@ -27,7 +27,16 @@
       "Bash(\".venv_clear/Scripts/python.exe\" -m pip --version)",
       "Bash(\".venv_clear/Scripts/python.exe\" -m pip install -e .)",
       "Bash(\".venv_clear/Scripts/python.exe\" -c \"from PySide6.QtWidgets import QApplication; print\\(''PySide6 imported successfully''\\)\")",
-      "Bash(\".venv_clear/Scripts/python.exe\" src/main.py)"
+      "Bash(\".venv_clear/Scripts/python.exe\" src/main.py)",
+      "Bash(find ./src -name \"*.py\" -exec wc -l {} +)",
+      "Bash(python3 -m pytest src/features/ui/tests/ -v --tb=short)",
+      "Bash(\".venv/Scripts/pytest.exe\" src/features/ui/tests/ -v --tb=short)",
+      "Bash(\"./.venv/Scripts/python.exe\" -m pytest src/features/ui/tests/ -v --tb=short)",
+      "Bash(wc -l \"c:/Users/PBO-PC-Lomel/OneDrive - MSFT/PythonProjects/Claude Code/PC Utilities using Python/src/features/ui/modern_main_window.py\" \"c:/Users/PBO-PC-Lomel/OneDrive - MSFT/PythonProjects/Claude Code/PC Utilities using Python/src/features/ui/tabs/\"*.py \"c:/Users/PBO-PC-Lomel/OneDrive - MSFT/PythonProjects/Claude Code/PC Utilities using Python/src/features/ui/windows/\"*.py)",
+      "Bash(wc -l \"c:/Users/PBO-PC-Lomel/OneDrive - MSFT/PythonProjects/Claude Code/PC Utilities using Python/src/features/ui/tests/\"*.py \"c:/Users/PBO-PC-Lomel/OneDrive - MSFT/PythonProjects/Claude Code/PC Utilities using Python/src/features/ui/tests/design_system/\"*.py)",
+      "Bash(source .venv/Scripts/activate)",
+      "Bash(where py:*)",
+      "Bash(py -m pytest src/features/ui/tests/ -v --tb=short)"
     ],
     "deny": [],
     "ask": []

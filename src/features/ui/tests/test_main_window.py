@@ -48,14 +48,14 @@ def test_status_update(qtbot: QtBot):
     qtbot.addWidget(widget)
 
     # Test success status
-    widget.update_status("Test message", success=True)
-    assert widget.status_label.text() == "Test message"
-    assert widget.status_icon.text() == "✓"
+    widget.status_indicator.update_status("Test message", success=True)
+    assert widget.status_indicator.message == "Test message"
+    assert widget.status_indicator.success is True
 
     # Test error status
-    widget.update_status("Error message", success=False)
-    assert widget.status_label.text() == "Error message"
-    assert widget.status_icon.text() == "⚠"
+    widget.status_indicator.update_status("Error message", success=False)
+    assert widget.status_indicator.message == "Error message"
+    assert widget.status_indicator.success is False
 
 
 def test_components_instantiation(qtbot: QtBot):
@@ -110,50 +110,25 @@ def test_menu_bar_creation(qtbot: QtBot):
     menubar = widget.menuBar()
     assert menubar is not None
 
-    # Check for File and Help menus
+    # Check for File and Help menus (with mnemonics)
     actions = menubar.actions()
     menu_texts = [action.text() for action in actions]
-    assert "File" in menu_texts
-    assert "Help" in menu_texts
+    assert "&File" in menu_texts
+    assert "&Help" in menu_texts
 
 
-def test_security_section_creation(qtbot: QtBot):
-    """Test that security section is created with all cards."""
+def test_status_indicator_exists(qtbot: QtBot):
+    """Test that status indicator widget is created."""
     widget = ModernDownloadManager()
     qtbot.addWidget(widget)
 
-    security_section = widget.create_security_section()
-    assert security_section is not None
-    assert security_section.layout() is not None
+    assert widget.status_indicator is not None
+    assert widget.status_indicator.message == "Ready to use"
 
 
-def test_converters_section_creation(qtbot: QtBot):
-    """Test that converters section is created with all cards."""
+def test_tab_widget_exists(qtbot: QtBot):
+    """Test that tab widget is created."""
     widget = ModernDownloadManager()
     qtbot.addWidget(widget)
 
-    converters_section = widget.create_converters_section()
-    assert converters_section is not None
-    assert converters_section.layout() is not None
-
-
-def test_header_creation(qtbot: QtBot):
-    """Test that header widget is created properly."""
-    widget = ModernDownloadManager()
-    qtbot.addWidget(widget)
-
-    header = widget.create_header()
-    assert header is not None
-    assert header.height() == 120
-    assert header.layout() is not None
-
-
-def test_status_indicator_creation(qtbot: QtBot):
-    """Test that status indicator is created with default values."""
-    widget = ModernDownloadManager()
-    qtbot.addWidget(widget)
-
-    status_widget = widget.create_status_indicator()
-    assert status_widget is not None
-    assert widget.status_label.text() == "Ready to use"
-    assert widget.status_icon.text() == "✓"
+    assert widget.tab_widget is not None
