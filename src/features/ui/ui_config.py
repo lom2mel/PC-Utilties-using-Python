@@ -151,6 +151,13 @@ class TabRegistry:
         category="converter"
     )
 
+    ANTIVIRUS_DEALS: Final[TabConfig] = TabConfig(
+        id="antivirus_deals",
+        title="Antivirus Sales and Discounts",
+        icon=ICONS.TAB_ANTIVIRUS_DEALS,
+        category="deals"
+    )
+
     def get_all_tabs(self) -> list[TabConfig]:
         """Get all tab configurations as dictionaries.
 
@@ -162,6 +169,8 @@ class TabRegistry:
             {"id": self.CYBER_SECURITY_NEWS.id, "title": self.CYBER_SECURITY_NEWS.title,
              "icon": self.CYBER_SECURITY_NEWS.icon},
             {"id": self.CONVERTERS.id, "title": self.CONVERTERS.title, "icon": self.CONVERTERS.icon},
+            {"id": self.ANTIVIRUS_DEALS.id, "title": self.ANTIVIRUS_DEALS.title,
+             "icon": self.ANTIVIRUS_DEALS.icon},
         ]
 
     def get_tab_by_category(self, category: str) -> Optional[TabConfig]:
@@ -173,7 +182,7 @@ class TabRegistry:
         Returns:
             TabConfig for the category, or None if not found
         """
-        tabs = [self.SECURITY, self.CYBER_SECURITY_NEWS, self.CONVERTERS]
+        tabs = [self.SECURITY, self.CYBER_SECURITY_NEWS, self.CONVERTERS, self.ANTIVIRUS_DEALS]
         for tab in tabs:
             if tab.category == category:
                 return tab

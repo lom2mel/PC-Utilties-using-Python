@@ -274,6 +274,7 @@ class IconTokens:
     TAB_SECURITY: Final[str] = "🔒"
     TAB_CONVERTERS: Final[str] = "📁"
     TAB_CYBER_SECURITY_NEWS: Final[str] = "📰"
+    TAB_ANTIVIRUS_DEALS: Final[str] = "🏷️"
 
 
 # Global icon instance

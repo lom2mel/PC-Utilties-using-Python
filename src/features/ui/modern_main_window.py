@@ -29,6 +29,7 @@ from features.ui.tabs import (
     create_security_tab_content,
     create_converters_tab_content,
     create_news_tab_content,
+    create_antivirus_deals_tab_content,
 )
 from features.ui.windows import (
     create_header,
@@ -142,12 +143,14 @@ class ModernDownloadManager(QMainWindow):
             self.start_picture_to_pdf_conversion,
         )
         news_content = create_news_tab_content()
+        deals_content = create_antivirus_deals_tab_content()
 
         # Map tab IDs - need to match CONFIG.tabs IDs
         self.tab_widget.add_tab_content("security", security_content)
         self.tab_widget.add_tab_content("converters", converters_content)
         # Note: news tab uses "cyber_security_news" in CONFIG
         self.tab_widget.add_tab_content("cyber_security_news", news_content)
+        self.tab_widget.add_tab_content("antivirus_deals", deals_content)
 
         content_layout.addStretch()
 
