@@ -114,7 +114,7 @@ class ApplicationState:
         Raises:
             ValueError: If tab_id is not valid
         """
-        valid_tabs = ["security", "cyber_security_news", "converters"]
+        valid_tabs = ["security", "cyber_security_news", "converters", "antivirus_deals"]
         if tab_id not in valid_tabs:
             raise ValueError(f"Invalid tab ID: {tab_id}. Must be one of {valid_tabs}")
 
