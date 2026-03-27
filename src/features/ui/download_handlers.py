@@ -5,7 +5,6 @@ PC utilities and security tools.
 """
 
 import webbrowser
-from PySide6.QtWidgets import QMessageBox
 from PySide6.QtCore import QObject, Signal
 
 
@@ -21,86 +20,70 @@ class DownloadHandlers(QObject):
 
     status_changed = Signal(str, bool)
 
-    # Download URLs as class constants
-    AVAST_URL = (
-        "https://www.avast.com/download-thank-you.php?product=AV-FREE-ONLINE"
-        "&loc=en-us"
-    )
+    # Download URLs as class constants (product pages, not direct downloads)
+    AVAST_URL = "https://www.avast.com/free-antivirus-download"
     VIRUSTOTAL_URL = "https://www.virustotal.com/gui/home/upload"
-    CCLEANER_URL = "https://www.ccleaner.com/ccleaner/download/standard"
-    SPECCY_URL = "https://www.ccleaner.com/speccy/download/standard"
+    CCLEANER_URL = "https://www.ccleaner.com/ccleaner"
+    SPECCY_URL = "https://www.ccleaner.com/speccy"
     BITDEFENDER_URL = "https://www.bitdefender.com/en-us/consumer/free-antivirus"
 
     def download_avast(self) -> None:
-        """Open Avast Antivirus download page in browser.
+        """Open Avast Antivirus product page in browser.
 
-        Updates status and shows confirmation message when successful.
+        Updates status when successful.
         """
-        self.status_changed.emit("Opening Avast download page...", True)
+        self.status_changed.emit("Opening Avast product page...", True)
         try:
             webbrowser.open(self.AVAST_URL)
-            self.status_changed.emit("Avast download page opened in browser", True)
-            self._show_download_message("Avast Antivirus")
+            self.status_changed.emit("Avast product page opened in browser", True)
         except Exception as e:
             self.status_changed.emit(f"Error: {str(e)}", False)
 
     def download_ccleaner(self) -> None:
-        """Open CCleaner download page in browser.
+        """Open CCleaner product page in browser.
 
-        Updates status and shows confirmation message when successful.
+        Updates status when successful.
         """
-        self.status_changed.emit("Opening CCleaner download page...", True)
+        self.status_changed.emit("Opening CCleaner product page...", True)
         try:
             webbrowser.open(self.CCLEANER_URL)
-            self.status_changed.emit("CCleaner download page opened in browser", True)
-            self._show_download_message("CCleaner")
+            self.status_changed.emit("CCleaner product page opened in browser", True)
         except Exception as e:
             self.status_changed.emit(f"Error: {str(e)}", False)
 
     def download_speccy(self) -> None:
-        """Open Speccy download page in browser.
+        """Open Speccy product page in browser.
 
-        Updates status and shows confirmation message when successful.
+        Updates status when successful.
         """
-        self.status_changed.emit("Opening Speccy download page...", True)
+        self.status_changed.emit("Opening Speccy product page...", True)
         try:
             webbrowser.open(self.SPECCY_URL)
-            self.status_changed.emit("Speccy download page opened in browser", True)
-            self._show_download_message("Speccy")
+            self.status_changed.emit("Speccy product page opened in browser", True)
         except Exception as e:
             self.status_changed.emit(f"Error: {str(e)}", False)
 
     def open_virustotal(self) -> None:
         """Open VirusTotal scanner in browser.
 
-        Shows information message about using VirusTotal for file scanning.
+        Updates status when successful.
         """
         self.status_changed.emit("Opening VirusTotal...", True)
         try:
             webbrowser.open(self.VIRUSTOTAL_URL)
             self.status_changed.emit("VirusTotal opened in browser", True)
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Information)
-            msg.setWindowTitle("VirusTotal Opened")
-            msg.setText("VirusTotal file scanner opened!")
-            msg.setInformativeText(
-                "You can now upload any file to scan it for viruses and malware."
-            )
-            msg.setStandardButtons(QMessageBox.Ok)
-            msg.exec()
         except Exception as e:
             self.status_changed.emit(f"Error: {str(e)}", False)
 
     def download_bitdefender(self) -> None:
-        """Open Bitdefender Antivirus download page in browser.
+        """Open Bitdefender Antivirus product page in browser.
 
-        Updates status and shows confirmation message when successful.
+        Updates status when successful.
         """
-        self.status_changed.emit("Opening Bitdefender download page...", True)
+        self.status_changed.emit("Opening Bitdefender product page...", True)
         try:
             webbrowser.open(self.BITDEFENDER_URL)
-            self.status_changed.emit("Bitdefender download page opened in browser", True)
-            self._show_download_message("Bitdefender Antivirus")
+            self.status_changed.emit("Bitdefender product page opened in browser", True)
         except Exception as e:
             self.status_changed.emit(f"Error: {str(e)}", False)
 
