@@ -4,6 +4,7 @@ This module provides functionality to fetch and aggregate cybersecurity news
 from various RSS feeds and provides static curated news sources.
 """
 
+import logging
 import webbrowser
 from dataclasses import dataclass
 from datetime import datetime, UTC
@@ -13,6 +14,9 @@ from typing import Optional
 import feedparser
 
 from features.ui.design_system import COLORS
+from features.ui.exceptions import FeedParseError, NetworkError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -110,8 +114,19 @@ class NewsFeedService:
                             description=description[:200] if description else None,
                         )
                     )
-            except Exception:
-                # Silently skip failed feeds to prevent UI issues
+            except Exception as e:
+                # Log feed parsing errors but continue with other feeds
+                logger.warning(
+                    f"Failed to parse RSS feed '{source}' from {feed_url}: {e}",
+                    exc_info=True
+                )
+                # Could raise FeedParseError here if we wanted to stop processing
+                # raise FeedParseError(
+                #     f"Failed to parse RSS feed",
+                #     feed_source=source,
+                #     feed_url=feed_url,
+                #     original_error=e
+                # ) from e
                 continue
 
         # Sort by date (newest first) and limit total results
@@ -170,9 +185,18 @@ class NewsFeedService:
 
         Args:
             url: URL to open
+
+        Raises:
+            NetworkError: If webbrowser fails to open the URL
         """
         try:
             webbrowser.open(url)
+            logger.info(f"Successfully opened URL: {url}")
         except Exception as e:
-            # Silently fail - UI will handle feedback
-            pass
+            # Log the error and raise specific exception
+            logger.warning(f"Failed to open URL {url}: {e}", exc_info=True)
+            raise NetworkError(
+                f"Failed to open news article URL",
+                url=url,
+                original_error=e
+            ) from e
