@@ -78,6 +78,7 @@ dependencies = [
     "xlsxwriter>=3.2.9",
     "structlog>=25.4.0",
     "feedparser>=6.0.11",
+    "bleach>=6.0.0",
 ]
 
 [project.optional-dependencies]

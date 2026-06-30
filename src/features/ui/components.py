@@ -7,7 +7,6 @@ IMPORTANT: These components are part of the frozen UI/UX v2.0 standard.
 Modifications must maintain design system integrity.
 """
 
-import webbrowser
 from typing import Callable, Optional
 from PySide6.QtWidgets import (
     QWidget,
@@ -30,6 +29,7 @@ from features.ui.design_system import (
     TABS,
     StyleSheetTemplates,
 )
+from features.ui.security_utils import validate_and_open_url
 
 
 class ModernCard(QFrame):
@@ -516,7 +516,7 @@ class NewsArticleCard(QFrame):
             event: Mouse press event
         """
         try:
-            webbrowser.open(self.article.url)
+            validate_and_open_url(self.article.url)
         except Exception:
             # Silently fail on browser open error
             pass
@@ -610,7 +610,7 @@ class CompactNewsCard(QFrame):
             event: Mouse press event
         """
         try:
-            webbrowser.open(self.article.url)
+            validate_and_open_url(self.article.url)
         except Exception:
             # Silently fail on browser open error
             pass

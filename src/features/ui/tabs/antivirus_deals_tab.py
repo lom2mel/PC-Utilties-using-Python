@@ -4,7 +4,6 @@ This module provides the antivirus deals tab with cards linking to popular
 antivirus vendor websites with their current sales, promotions, and discounts.
 """
 
-import webbrowser
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
@@ -15,6 +14,7 @@ from PySide6.QtWidgets import (
 
 from features.ui.components import ModernCard, SectionHeader
 from features.ui.design_system import COLORS, SPACING
+from features.ui.security_utils import validate_and_open_url
 
 
 class AntivirusDealsTabContent(QWidget):
@@ -157,7 +157,7 @@ class AntivirusDealsTabContent(QWidget):
             url: The URL to open
         """
         try:
-            webbrowser.open(url)
+            validate_and_open_url(url)
         except Exception:
             # Silently fail on browser open error
             pass

@@ -4,7 +4,6 @@ This module provides the cybersecurity news tab with static sources
 and live RSS feed headlines.
 """
 
-import webbrowser
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -19,6 +18,7 @@ from PySide6.QtGui import QFont
 from features.ui.components import SectionHeader, ModernCard, NewsArticleCard
 from features.ui.design_system import COLORS, TYPOGRAPHY, SPACING
 from features.ui.news_feed_service import NewsFeedService
+from features.ui.security_utils import validate_and_open_url
 
 
 class NewsTabContent(QWidget):
@@ -75,9 +75,9 @@ class NewsTabContent(QWidget):
                 source["icon"],
                 COLORS.GRADIENT_START
             )
-            # Store URL in closure for click handler
+            # Store URL in closure for secure click handler
             url = source["url"]
-            card.mousePressEvent = lambda e, u=url: webbrowser.open(u)
+            card.mousePressEvent = lambda e, u=url: validate_and_open_url(u)
             row, col = divmod(idx, 3)
             static_grid.addWidget(card, row, col)
 
