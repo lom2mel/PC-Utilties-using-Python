@@ -36,7 +36,13 @@
       "Bash(wc -l \"c:/Users/PBO-PC-Lomel/OneDrive - MSFT/PythonProjects/Claude Code/PC Utilities using Python/src/features/ui/tests/\"*.py \"c:/Users/PBO-PC-Lomel/OneDrive - MSFT/PythonProjects/Claude Code/PC Utilities using Python/src/features/ui/tests/design_system/\"*.py)",
       "Bash(source .venv/Scripts/activate)",
       "Bash(where py:*)",
-      "Bash(py -m pytest src/features/ui/tests/ -v --tb=short)"
+      "Bash(py -m pytest src/features/ui/tests/ -v --tb=short)",
+      "PowerShell(& .\\\\.venv_clear\\\\Scripts\\\\python.exe -m pip show bleach 2>$null)",
+      "PowerShell(& .\\\\.venv\\\\Scripts\\\\python.exe -m pip show bleach 2>$null)",
+      "PowerShell(& .\\\\.venv_clear\\\\Scripts\\\\python.exe -m pip show feedparser 2>$null)",
+      "PowerShell(& .\\\\.venv_clear\\\\Scripts\\\\python.exe -m pip install bleach)",
+      "PowerShell(& .\\\\.venv_clear\\\\Scripts\\\\python.exe -c \"from features.ui.news_feed_service import NewsFeedService; from features.ui.tabs.security_tab import create_security_tab_content; from features.ui.modern_main_window import ModernDownloadManager; print\\('imports OK'\\)\")",
+      "PowerShell($env:PYTHONPATH=\"src\"; & .\\\\.venv_clear\\\\Scripts\\\\python.exe -c \"from features.ui.news_feed_service import NewsFeedService; from features.ui.tabs.security_tab import create_security_tab_content; from features.ui.modern_main_window import ModernDownloadManager; print\\('imports OK'\\)\")"
     ],
     "deny": [],
     "ask": []
