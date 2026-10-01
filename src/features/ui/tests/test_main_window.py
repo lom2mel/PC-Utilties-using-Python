@@ -1,13 +1,31 @@
 """Tests for ModernDownloadManager and related components."""
 
-from pytestqt.qtbot import QtBot
-from unittest.mock import patch, MagicMock
-from PySide6.QtWidgets import QMessageBox
+from unittest.mock import patch
 
-from features.ui.modern_main_window import ModernDownloadManager
+import pytest
+from PySide6.QtWidgets import QMessageBox
+from pytestqt.qtbot import QtBot
+
 from features.ui.components import ModernCard, SectionHeader
-from features.ui.download_handlers import DownloadHandlers
 from features.ui.converter_handlers import ConverterHandlers
+from features.ui.download_handlers import DownloadHandlers
+from features.ui.modern_main_window import ModernDownloadManager
+from features.ui.news_feed_service import NewsFeedService
+
+
+def _fake_fetch_articles(*_args, **_kwargs):
+    """Return no articles so window tests stay off the network."""
+    return []
+
+
+@pytest.fixture(autouse=True)
+def _no_real_feed_fetches(monkeypatch: pytest.MonkeyPatch):
+    """Replace feed fetching so window tests never touch the network.
+
+    The main window starts background news workers at construction; without
+    this stub they hit the real network and race later tests.
+    """
+    monkeypatch.setattr(NewsFeedService, "fetch_articles", _fake_fetch_articles)
 
 
 def test_download_manager_instantiation(qtbot: QtBot):
@@ -36,7 +54,7 @@ def test_show_about(qtbot: QtBot):
     widget = ModernDownloadManager()
     qtbot.addWidget(widget)
 
-    with patch.object(QMessageBox, 'exec') as mock_exec:
+    with patch.object(QMessageBox, "exec") as mock_exec:
         widget.show_about()
         # Verify the dialog would have been shown
         assert mock_exec.called
@@ -61,18 +79,12 @@ def test_status_update(qtbot: QtBot):
 def test_components_instantiation(qtbot: QtBot):
     """Test that UI components can be instantiated."""
     card = ModernCard(
-        title="Test Card",
-        description="Test description",
-        icon_text="🧪",
-        color="#FF0000"
+        title="Test Card", description="Test description", icon_text="🧪", color="#FF0000"
     )
     qtbot.addWidget(card)
     assert card is not None
 
-    header = SectionHeader(
-        title="Test Section",
-        description="Test description"
-    )
+    header = SectionHeader(title="Test Section", description="Test description")
     qtbot.addWidget(header)
     assert header is not None
 
@@ -87,7 +99,7 @@ def test_download_handlers_signals(qtbot: QtBot):
 
     handler.status_changed.connect(capture_status)
 
-    with patch('webbrowser.open'):
+    with patch("webbrowser.open"):
         handler.download_avast()
 
     assert len(status_messages) > 0

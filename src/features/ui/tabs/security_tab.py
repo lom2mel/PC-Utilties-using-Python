@@ -4,23 +4,27 @@ This module provides the security & maintenance tools tab with a cybersecurity
 news headlines section and cards for downloading antivirus and security utilities.
 """
 
-from PySide6.QtCore import Qt, QTimer
+import logging
+
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QFrame,
-    QLabel,
     QGridLayout,
+    QLabel,
     QVBoxLayout,
     QWidget,
 )
 
-from features.ui.components import ModernCard, CompactNewsCard, SectionHeader
+from features.ui.components import CompactNewsCard, ModernCard, SectionHeader
 from features.ui.design_system import COLORS, SPACING, TYPOGRAPHY
 from features.ui.download_handlers import DownloadHandlers
 from features.ui.news_feed_service import NewsFeedService
+from features.ui.news_feed_worker import NewsFeedWorker
+
+logger = logging.getLogger(__name__)
 
 # Configuration constants
-NEWS_FETCH_DELAY_MS = 100  # Delay before fetching RSS feeds to prevent UI freeze
 DEFAULT_ARTICLE_LIMIT = 10  # Number of articles to fetch per source
 HEADLINE_DISPLAY_COUNT = 3  # Number of headlines to display in compact view
 
@@ -36,21 +40,29 @@ class SecurityTabContent(QWidget):
         download_handlers: Handler for download operations
     """
 
-    def __init__(self, download_handlers: DownloadHandlers, parent=None):
+    def __init__(
+        self,
+        download_handlers: DownloadHandlers,
+        feed_service: NewsFeedService | None = None,
+        parent=None,
+    ):
         """Initialize the security tab content.
 
         Args:
             download_handlers: Handler for download operations
+            feed_service: Optional news feed service (injected in tests)
             parent: Optional parent widget
         """
         super().__init__(parent)
         self.download_handlers = download_handlers
+        self._feed_service = feed_service or NewsFeedService()
+        self._news_worker: NewsFeedWorker | None = None
         self._news_layout = None
         self._news_loading_label = None
         self._init_ui()
 
-        # Defer RSS fetching to avoid UI freeze
-        QTimer.singleShot(NEWS_FETCH_DELAY_MS, self._populate_headlines)
+        # Fetch headlines on a background thread; the GUI stays responsive
+        self._start_headlines_fetch()
 
     def _init_ui(self) -> None:
         """Initialize the security tab UI."""
@@ -70,7 +82,7 @@ class SecurityTabContent(QWidget):
         """
         return SectionHeader(
             "🔒 Security & Maintenance Tools",
-            "Download and use essential security utilities to keep your PC safe"
+            "Download and use essential security utilities to keep your PC safe",
         )
 
     def _create_news_section(self) -> QFrame:
@@ -81,16 +93,14 @@ class SecurityTabContent(QWidget):
         """
         # News container for async loading
         news_container = QFrame()
-        news_container.setStyleSheet(f"background-color: transparent;")
+        news_container.setStyleSheet("background-color: transparent;")
         news_layout = QVBoxLayout(news_container)
         news_layout.setSpacing(SPACING.SM)
         news_layout.setContentsMargins(0, 0, 0, 0)
 
         # Add loading label
         self._news_loading_label = QLabel("Loading latest headlines...")
-        self._news_loading_label.setFont(
-            QFont(TYPOGRAPHY.FONT_FAMILY, TYPOGRAPHY.SIZE_BODY_SMALL)
-        )
+        self._news_loading_label.setFont(QFont(TYPOGRAPHY.FONT_FAMILY, TYPOGRAPHY.SIZE_BODY_SMALL))
         self._news_loading_label.setStyleSheet(f"color: {COLORS.TEXT_SECONDARY};")
         self._news_loading_label.setAlignment(Qt.AlignCenter)
         news_layout.addWidget(self._news_loading_label)
@@ -138,10 +148,7 @@ class SecurityTabContent(QWidget):
             Configured Avast card
         """
         card = ModernCard(
-            "Avast Antivirus",
-            "Download free antivirus protection for your PC",
-            "🛡️",
-            "#FF6600"
+            "Avast Antivirus", "Download free antivirus protection for your PC", "🛡️", "#FF6600"
         )
         card.mousePressEvent = lambda e: self.download_handlers.download_avast()
         return card
@@ -153,10 +160,7 @@ class SecurityTabContent(QWidget):
             Configured VirusTotal card
         """
         card = ModernCard(
-            "VirusTotal Scanner",
-            "Scan files for viruses and malware online",
-            "🔍",
-            "#394EFF"
+            "VirusTotal Scanner", "Scan files for viruses and malware online", "🔍", "#394EFF"
         )
         card.mousePressEvent = lambda e: self.download_handlers.open_virustotal()
         return card
@@ -167,12 +171,7 @@ class SecurityTabContent(QWidget):
         Returns:
             Configured CCleaner card
         """
-        card = ModernCard(
-            "CCleaner",
-            "Clean and optimize your PC performance",
-            "🧹",
-            "#0066CC"
-        )
+        card = ModernCard("CCleaner", "Clean and optimize your PC performance", "🧹", "#0066CC")
         card.mousePressEvent = lambda e: self.download_handlers.download_ccleaner()
         return card
 
@@ -183,10 +182,7 @@ class SecurityTabContent(QWidget):
             Configured Speccy card
         """
         card = ModernCard(
-            "Speccy",
-            "View detailed system information and specifications",
-            "💻",
-            "#00A4EF"
+            "Speccy", "View detailed system information and specifications", "💻", "#00A4EF"
         )
         card.mousePressEvent = lambda e: self.download_handlers.download_speccy()
         return card
@@ -201,39 +197,40 @@ class SecurityTabContent(QWidget):
             "Bitdefender Antivirus",
             "Download free antivirus protection for your PC",
             "🦠",
-            "#ED1C24"
+            "#ED1C24",
         )
         card.mousePressEvent = lambda e: self.download_handlers.download_bitdefender()
         return card
 
-    def _populate_headlines(self) -> None:
-        """Populate headlines layout with fetched articles (called via QTimer)."""
-        # Remove loading label
-        if (
-            hasattr(self, "_news_loading_label")
-            and self._news_loading_label
-        ):
-            self._news_loading_label.setParent(None)
-            self._news_loading_label = None
+    def _start_headlines_fetch(self) -> None:
+        """Start the background RSS fetch and wire its result signals.
 
-        if not hasattr(self, "_news_layout"):
-            return
+        Connections are made before ``start()`` so fast results cannot be
+        missed. The worker keeps itself referenced until its thread exits
+        (see ``NewsFeedWorker._live``); this tab only mirrors the running
+        state for tests and clears it on the built-in ``finished`` signal.
+        """
+        worker = NewsFeedWorker(self._feed_service, DEFAULT_ARTICLE_LIMIT)
+        worker.articles_ready.connect(self._on_articles_ready)
+        worker.fetch_failed.connect(self._on_fetch_failed)
+        worker.finished.connect(self._on_worker_finished)
+        self._news_worker = worker
+        worker.start()
 
-        service = NewsFeedService()
-        articles = service.fetch_articles(limit=DEFAULT_ARTICLE_LIMIT)
+    def _on_worker_finished(self) -> None:
+        """Release the worker reference once its thread has exited."""
+        self._news_worker = None
+
+    def _on_articles_ready(self, articles: list) -> None:
+        """Render fetched headlines in the news section (main thread slot).
+
+        Args:
+            articles: Fetched NewsArticle objects (possibly empty)
+        """
+        self._remove_news_loading_label()
 
         if not articles:
-            no_news = QLabel(
-                "Unable to fetch news. Please check your internet connection."
-            )
-            no_news.setFont(
-                QFont(TYPOGRAPHY.FONT_FAMILY, TYPOGRAPHY.SIZE_BODY_SMALL)
-            )
-            no_news.setStyleSheet(
-                f"color: {COLORS.TEXT_SECONDARY}; padding: {SPACING.SM}px;"
-            )
-            no_news.setAlignment(Qt.AlignCenter)
-            self._news_layout.addWidget(no_news)
+            self._add_news_error_label()
             return
 
         # Show only limited articles for compact display
@@ -241,14 +238,42 @@ class SecurityTabContent(QWidget):
             card = CompactNewsCard(article)
             self._news_layout.addWidget(card)
 
+    def _on_fetch_failed(self, message: str) -> None:
+        """Show the error label when the background fetch fails.
 
-def create_security_tab_content(download_handlers: DownloadHandlers) -> QWidget:
+        Args:
+            message: Error description from the worker
+        """
+        logger.warning(f"Headlines fetch failed: {message}")
+        self._remove_news_loading_label()
+        self._add_news_error_label()
+
+    def _remove_news_loading_label(self) -> None:
+        """Remove the loading label from the news section, if present."""
+        if self._news_loading_label is not None:
+            self._news_loading_label.setParent(None)
+            self._news_loading_label = None
+
+    def _add_news_error_label(self) -> None:
+        """Add the standard 'unable to fetch' label to the news section."""
+        no_news = QLabel("Unable to fetch news. Please check your internet connection.")
+        no_news.setFont(QFont(TYPOGRAPHY.FONT_FAMILY, TYPOGRAPHY.SIZE_BODY_SMALL))
+        no_news.setStyleSheet(f"color: {COLORS.TEXT_SECONDARY}; padding: {SPACING.SM}px;")
+        no_news.setAlignment(Qt.AlignCenter)
+        self._news_layout.addWidget(no_news)
+
+
+def create_security_tab_content(
+    download_handlers: DownloadHandlers,
+    feed_service: NewsFeedService | None = None,
+) -> QWidget:
     """Create security tools tab content with news headlines and cards.
 
     Args:
         download_handlers: Handler for download operations
+        feed_service: Optional news feed service (injected in tests)
 
     Returns:
         Widget with news headlines and security tool cards
     """
-    return SecurityTabContent(download_handlers)
+    return SecurityTabContent(download_handlers, feed_service=feed_service)
